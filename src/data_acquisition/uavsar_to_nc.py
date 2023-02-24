@@ -12,11 +12,19 @@ from uavsar_pytools import UavsarCollection
 
 from georeferencing import resolution_to_meters
 
+import os
+
+import sys
+
+import certifi
+
+os.environ['REQUESTS_CA_BUNDLE'] = os.path.join(os.path.dirname(sys.argv[0]), certifi.where())
+
 #directory of images
 img_dir = '/bsuhome/zacharykeskinen/scratch/data/uavsar/ncs/images'
 
 if len(glob(join(img_dir, '*_grd'))) < 17:
-    lowman_col = UavsarCollection(collection = 'Lowman, CO', work_dir = img_dir)
+    lowman_col = UavsarCollection(collection = 'Lowman, CO', work_dir = img_dir, clean = False)
     lowman_col.collection_to_tiffs()
 
 # holds all dataset one for each image pair
@@ -26,13 +34,26 @@ datasets = []
 coarsen_factor = 1
 
 for img_pair in tqdm(glob(join(img_dir, '*')), desc = 'Creating Lowman netcdfs.'):
+
     # get all the coherence, unwrapped, wrapped, incidence angle tiffs
     tiffs = [i for i in glob(join(img_pair, '*.tiff')) if any(ss in i for ss in ['cor', 'int', 'unw', 'inc'])]
+
+    if len(tiffs) == 0:
+        print(f'No images for {img_pair}')
+        continue
 
     # get metadata
     ann = pd.read_csv(glob(join(img_pair, '*.csv'))[0])
     time1 = pd.to_datetime(ann['start time of acquisition for pass 1'].iloc[0])
     time2 = pd.to_datetime(ann['start time of acquisition for pass 2'].iloc[0])
+
+    nc_dir = '/bsuhome/zacharykeskinen/scratch/data/uavsar/ncs'
+    out_fp = join(nc_dir , f"{time1.strftime('%Y-%m-%d')}_{time2.strftime('%Y-%m-%d')}.nc")
+
+    if exists(out_fp):
+        print(f'{out_fp} exists. Skipping.')
+        continue
+
     resolution_deg = float(ann.loc[0, 'grd_mag.col_mult']) # deg/pixel
     ul_lat = ann.loc[0, 'grd_mag.row_addr']
     ul_lon = ann.loc[0, 'grd_mag.col_addr']
@@ -47,6 +68,10 @@ for img_pair in tqdm(glob(join(img_dir, '*')), desc = 'Creating Lowman netcdfs.'
     for img_type in ['cor', 'int', 'unw', 'inc']:
 
         type_imgs = [i for i in glob(join(img_pair, '*.tiff')) if f'.{img_type}.' in i]
+
+        if len(type_imgs) == 0:
+            print(f'No images for {img_type} in {img_pair}')
+            continue
 
         band_imgs = []
 
@@ -64,6 +89,9 @@ for img_pair in tqdm(glob(join(img_dir, '*')), desc = 'Creating Lowman netcdfs.'
             else:
                 img = img.squeeze(dim = 'band')
                 img = img.drop_vars('band')
+
+            if img_type == 'int':
+                img = xr.ufuncs.angle(img)
             
             # coarsen to approximately 30 meters
             img = img.coarsen(x = coarsen_factor, boundary = 'trim').mean().coarsen(y = coarsen_factor, boundary = 'trim').mean()
@@ -89,5 +117,4 @@ for img_pair in tqdm(glob(join(img_dir, '*')), desc = 'Creating Lowman netcdfs.'
     img_ds.attrs['resolution_m'] = res_meters * coarsen_factor
     img_ds.attrs['resolution_deg'] = resolution_deg * coarsen_factor
 
-    nc_dir = '/bsuhome/zacharykeskinen/scratch/data/uavsar/ncs'
-    img_ds.to_netcdf(join(nc_dir , f"{time1.strftime('%Y-%m-%d')}_{time2.strftime('%Y-%m-%d')}.nc"))
+    img_ds.to_netcdf(out_fp)
