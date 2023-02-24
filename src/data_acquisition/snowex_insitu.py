@@ -3,11 +3,12 @@ import pandas as pd
 
 full_df = pd.read_parquet('/bsuhome/zacharykeskinen/uavsar-validation/data/insitu/snotel.parq')
 
-if 'SNOWDEPTH' in full_df.columns:
-    full_df = full_df.drop(['SNOWDEPTH'], axis = 1)
+# add 2020 pits
 
-if len(full_df[full_df['datasource'] == 'SnowEx']) < 47:
-    fp = '/bsuhome/zacharykeskinen/scratch/data/uavsar/snowpits/SNEX20_TS_SP_Summary_SWE_v01.csv'
+fps = ['/bsuhome/zacharykeskinen/scratch/data/uavsar/snowpits/2020/SNEX20_TS_SP_Summary_SWE_v01.csv',\
+        '/bsuhome/zacharykeskinen/scratch/data/uavsar/snowpits/2021/SNEX21_TS_SP_Summary_SWE_v01.csv']
+
+for fp in fps:
     df = pd.read_csv(fp)
 
     df = df.loc[df.PitID.str.contains('ID'), :]
@@ -28,4 +29,11 @@ if len(full_df[full_df['datasource'] == 'SnowEx']) < 47:
 
     df = df[['SWE','SD', 'datasource', 'site_name', 'lon', 'lat' ,'SWE-A', 'SWE-B', 'density']]
 
-full_df.to_parquet('/bsuhome/zacharykeskinen/uavsar-validation/data/insitu/snotel.parq')
+    full_df = pd.concat([full_df, df], axis = 0)
+
+full_df = full_df.set_index(pd.to_datetime(full_df.index.get_level_values('datetime'), utc = True).date)
+
+full_df = full_df.sort_index()
+
+import warnings; warnings.filterwarnings('ignore', message='.*initial implementation of Parquet.*')
+full_df.to_parquet('/bsuhome/zacharykeskinen/uavsar-validation/data/insitu/all_insitu.parq')

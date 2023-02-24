@@ -20,4 +20,5 @@ for name, site_id in snotels.items():
 
 df = pd.concat(dfs, axis = 0)
 
+import warnings; warnings.filterwarnings('ignore', message='.*initial implementation of Parquet.*')
 df.to_parquet('/bsuhome/zacharykeskinen/uavsar-validation/data/insitu/snotel.parq')
