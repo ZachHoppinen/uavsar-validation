@@ -24,7 +24,7 @@ os.environ['REQUESTS_CA_BUNDLE'] = os.path.join(os.path.dirname(sys.argv[0]), ce
 img_dir = '/bsuhome/zacharykeskinen/scratch/data/uavsar/ncs/images'
 
 if len(glob(join(img_dir, '*_grd'))) < 17:
-    lowman_col = UavsarCollection(collection = 'Lowman, CO', work_dir = img_dir, clean = False)
+    lowman_col = UavsarCollection(collection = 'Lowman, CO', work_dir = img_dir, clean = False, inc = True)
     lowman_col.collection_to_tiffs()
 
 # holds all dataset one for each image pair
@@ -47,8 +47,10 @@ for img_pair in tqdm(glob(join(img_dir, '*')), desc = 'Creating Lowman netcdfs.'
     time1 = pd.to_datetime(ann['start time of acquisition for pass 1'].iloc[0])
     time2 = pd.to_datetime(ann['start time of acquisition for pass 2'].iloc[0])
 
+    flight_dir = basename(img_pair).split('_')[1][:3]
+
     nc_dir = '/bsuhome/zacharykeskinen/scratch/data/uavsar/ncs'
-    out_fp = join(nc_dir , f"{time1.strftime('%Y-%m-%d')}_{time2.strftime('%Y-%m-%d')}.nc")
+    out_fp = join(nc_dir , f"{flight_dir}_{time1.strftime('%Y-%m-%d')}_{time2.strftime('%Y-%m-%d')}.nc")
 
     if exists(out_fp):
         print(f'{out_fp} exists. Skipping.')
@@ -104,10 +106,9 @@ for img_pair in tqdm(glob(join(img_dir, '*')), desc = 'Creating Lowman netcdfs.'
         # concat all bands into a data var of img dataset
 
         if img_type != 'inc': 
-            img_ds[img_type] = xr.concat(band_imgs, dim = 'band')
+            img = xr.concat(band_imgs, dim = 'band')
         
-        else:
-            img_ds[img_type] = img
+        img_ds[img_type] = img
 
     img_ds.attrs['time1'] = time1.strftime("%Y-%m-%d")
     img_ds.attrs['time2'] = time2.strftime("%Y-%m-%d")
