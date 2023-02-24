@@ -6,10 +6,10 @@ This is a research repository comparing UAVSAR L-band InSAR images against snow 
 
 - [ ] Download data
     - [ ] Download UAVSAR unwrapped phase, wrapped phase, coherence, and incidence angles to netcdfs.
-    - [ ] Download Lidar datasets for Banner Summit (QSI), Dry Creek (QSI and helicopter), Mores Creek (QSI).
+    - [x] Download Lidar datasets for Banner Summit (QSI), Dry Creek (QSI and maybe helicopter), Mores Creek (QSI).
     - [ ] Download SnowEx pits, probing, other in-situ observations to pandas dataframe
-    - [ ] Download snotel observations of flight dates for all snotel sites
-    - [ ] Download SNOWMODEL data
+    - [x] Download snotel observations of flight dates for all snotel sites
+    - [x] Download SNOWMODEL data
 
 - [ ] Prepare UAVSAR
     - [ ] Run phase, inc -> SWE change using in-situ observations
