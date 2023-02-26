@@ -108,6 +108,9 @@ for img_pair in tqdm(glob(join(img_dir, '*')), desc = 'Creating Lowman netcdfs.'
         if img_type != 'inc': 
             img = xr.concat(band_imgs, dim = 'band')
         
+        else:
+            img = img.rio.reproject_match(img_ds['cor'])
+        
         img_ds[img_type] = img
 
     img_ds.attrs['time1'] = time1.strftime("%Y-%m-%d")
