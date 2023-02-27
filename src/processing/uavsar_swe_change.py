@@ -22,6 +22,12 @@ print('Opened incs and df')
 ncs_fp = Path('/bsuhome/zacharykeskinen/scratch/data/uavsar/ncs/')
 a = []
 for fp in ncs_fp.glob('*-*.nc'):
+    if fp.with_suffix('.sd.nc').exists():
+        continue
+
+    if '.sd.nc' in str(fp):
+        continue
+
     print(fp)
 
     img = xr.open_dataset(fp)
@@ -46,6 +52,8 @@ for fp in ncs_fp.glob('*-*.nc'):
 
     inc = inc.where(inc < 10000).where(inc > -10000)
 
+    inc = inc.rio.reproject_match(img['cor'])
+
     img['inc'] = inc
 
     mean_inc = img['inc'].mean()
@@ -62,7 +70,7 @@ for fp in ncs_fp.glob('*-*.nc'):
 
         for band in ['VV', 'VH', 'HV', 'HH']:
 
-            mean_phase = img[img_type].sel(band = band).mean()
+            mean_phase = img[img_type].sel(band = band).where((img[img_type].sel(band = band) < 1e6) & (img[img_type].sel(band = band) > -1e6)).mean()
 
             img[img_type].loc[dict(band = band)] = img[img_type].sel(band = band) + (phase_theor - mean_phase)
 
