@@ -37,8 +37,7 @@ for lidar_fp in lidar_dir.glob('*.nc'):
 
     for fp in tqdm(ncs_dir.glob('*.sd.nc')):
 
-        if '2020' in fp.name or '-03-' in fp.name:
-            continue
+        print(fp)
 
         ds = xr.open_dataset(fp)
 

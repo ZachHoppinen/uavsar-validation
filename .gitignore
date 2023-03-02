@@ -134,3 +134,13 @@ dmypy.json
 *.parq
 *.tif
 *.nc
+
+*.shp
+*.cpg
+*.dbf
+*.prj
+*.xml
+*.shx
+*.zip
+
+*.sqlite
