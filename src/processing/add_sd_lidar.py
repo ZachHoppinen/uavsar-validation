@@ -25,14 +25,20 @@ for lidar_fp in lidar_dir.glob('*.nc'):
     lidar = lidar.rio.reproject_match(re_ds_lidar)
 
     ints = {'052': [], '232':[]}
-    unws = {'052': [], '232':[]}
+    sd_unws = {'052': [], '232':[]}
 
     cors = {'052': [], '232':[]}
     incs = {'052': [], '232':[]}
 
+    unws = {'052': [], '232':[]}
+    ints = {'052': [], '232':[]}
+
     lidar_times = lidar.time.data
 
     for fp in tqdm(ncs_dir.glob('*.sd.nc')):
+
+        if '2020' in fp.name or '-03-' in fp.name:
+            continue
 
         ds = xr.open_dataset(fp)
 
@@ -53,20 +59,33 @@ for lidar_fp in lidar_dir.glob('*.nc'):
         inc = inc.expand_dims(time = [t])
         incs[direction].append(inc)
 
+        if 'unw' in ds.data_vars:
+            unw = ds['unw'].rio.reproject_match(lidar['lidar-sd'])
+            unw = unw.expand_dims(time = [t])
+            unws[direction].append(unw)
+
+        int = ds['int'].rio.reproject_match(lidar['lidar-sd'])
+        int = int.expand_dims(time = [t])
+        ints[direction].append(int)
+
         if 'sd_delta_unw' in ds.data_vars:
             unw = ds['sd_delta_unw'].rio.reproject_match(lidar['lidar-sd'])
             unw = unw.expand_dims(time = [t])
             unw.attrs = ds.attrs
-            unws[direction].append(unw)
+            sd_unws[direction].append(unw)
     
     for direction, xlist in ints.items():
         lidar = xr.merge([lidar, xr.concat(xlist, dim = 'time', combine_attrs = 'drop_conflicts').rename(f'dSD_{direction}_int')], combine_attrs = 'drop_conflicts')
-    for direction, xlist in unws.items():
+    for direction, xlist in sd_unws.items():
         lidar = xr.merge([lidar, xr.concat(xlist, dim = 'time', combine_attrs = 'drop_conflicts').rename(f'dSD_{direction}_unw')], combine_attrs = 'drop_conflicts')
     for direction, xlist in cors.items():
         lidar = xr.merge([lidar, xr.concat(xlist, dim = 'time', combine_attrs = 'drop_conflicts').rename(f'{direction}_cor')], combine_attrs = 'drop_conflicts')
     for direction, xlist in incs.items():
         lidar = xr.merge([lidar, xr.concat(xlist, dim = 'time', combine_attrs = 'drop_conflicts').rename(f'{direction}_inc')], combine_attrs = 'drop_conflicts')
+    for direction, xlist in unws.items():
+        lidar = xr.merge([lidar, xr.concat(xlist, dim = 'time', combine_attrs = 'drop_conflicts').rename(f'{direction}_unw')], combine_attrs = 'drop_conflicts')
+    for direction, xlist in ints.items():
+        lidar = xr.merge([lidar, xr.concat(xlist, dim = 'time', combine_attrs = 'drop_conflicts').rename(f'{direction}_int')], combine_attrs = 'drop_conflicts')
     
     lidar.attrs['lidar_times'] = [str(t) for t in lidar_times]
                                   
@@ -74,4 +93,4 @@ for lidar_fp in lidar_dir.glob('*.nc'):
 
     print(lidar.attrs)
 
-    lidar.to_netcdf(lidar_fp.with_suffix('.all.nc'))
+    lidar.to_netcdf(lidar_fp.with_suffix('.phase.nc'))
