@@ -1,59 +1,42 @@
-# snowpit first
-import pandas as pd
-
-df = pd.read_parquet('/bsuhome/zacharykeskinen/uavsar-validation/data/insitu/all_insitu.parq')
-df = df.loc[df.site_name != 'jackson']
-
-import rioxarray as rxa
-import xarray as xr
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
-from pathlib import Path
-
-ncs_dir = Path('/bsuscratch/zacharykeskinen/data/uavsar/ncs/')
-
-from insitu import get_uavsar_insitu
-
-import pandas as pd
-df = pd.read_parquet('/bsuhome/zacharykeskinen/uavsar-validation/data/insitu/insitu_uavsar.parq')
-df = df.loc[df.site_name != 'jackson']
-df = df.loc[df.dSD > 0.8]
-df[['site_name', 'dSD', 'end_datetime', 'dTime']]
-
-import contextily as ctx
-import matplotlib.pyplot as plt
-import xarray as xr
-df = pd.read_parquet('/bsuhome/zacharykeskinen/uavsar-validation/data/insitu/insitu_uavsar.parq')
-
-f, ax = plt.subplots(figsize = (12, 8))
-
-ds = xr.open_dataset('/bsuhome/zacharykeskinen/scratch/data/uavsar/ncs/232_2021-02-03_2021-02-10.sd.nc')
-
-ds['sd_delta_int'].sel(band = 'VV').plot(ax = ax)
-
-df.plot.scatter(x = 'lon', y = 'lat', ax= ax)
-ctx.add_basemap(ax = ax, crs= 'EPSG:4326')
-
-plt.savefig('/bsuhome/zacharykeskinen/uavsar-validation/figures/insitu/map_insitu.png')
-plt.show()
+from stats import get_stats
+df_full = pd.read_parquet('/bsuhome/zacharykeskinen/uavsar-validation/data/insitu/insitu_uavsar.parq')
+df_full = df_full.loc[df_full.site_name != 'jackson']
 
 fig, axes = plt.subplots(1, 2, figsize = (12,8))
 
-df.plot.scatter(x = 'dSD', y = 'UV_int_VV_sd', ax= axes[0], label = 'VV')
-df.plot.scatter(x = 'dSD', y = 'UV_int_VH_sd', ax= axes[0], color = 'C1', label = 'VH')
-df.plot.scatter(x = 'dSD', y = 'UV_int_HV_sd', ax= axes[0], color = 'C2', label = 'HV')
-df.plot.scatter(x = 'dSD', y = 'UV_int_HH_sd', ax= axes[0], color = 'C1', label = 'HH')
-axes[0].set_title('Lowman Insitu vs Wrapped UAVSAR Snow Depth Changes')
+symbol_dic = {'NRCS':'o', 'SnowEx':'x'}
+
+for source in ['NRCS', 'SnowEx']:
+    df = df_full.loc[df_full.datasource == source]
+    symbol = symbol_dic[source]
+
+    for j, img_type in enumerate(['int', 'unw']):
+        for i, band in enumerate(['VV']):
+            if source == 'NRCS':
+                df.plot.scatter(x = 'dSD', y = f'UV_{img_type}_{band}_sd', ax = axes[j], label = f'Snotel', marker = symbol, color = f'C{i}')
+            else:
+                df.plot.scatter(x = 'dSD', y = f'UV_{img_type}_{band}_sd', ax = axes[j], label = f'Snowpit', marker = symbol, color = f'C{i}')
+
+axes[0].set_title('Insitu vs Wrapped UAVSAR Snow Depth Changes')
 axes[0].set_xlabel('Insitu')
 axes[0].set_ylabel('Wrapped UAVSAR SD')
+axes[0].legend(loc = 'lower right')
 
-df.plot.scatter(x = 'dSD', y = 'UV_unw_VV_sd', ax= axes[1], label = 'VV')
-df.plot.scatter(x = 'dSD', y = 'UV_unw_VH_sd', ax= axes[1], color = 'C1', label = 'VH')
-df.plot.scatter(x = 'dSD', y = 'UV_unw_HV_sd', ax= axes[1], color = 'C2', label = 'HV')
-df.plot.scatter(x = 'dSD', y = 'UV_unw_HH_sd', ax= axes[1], color = 'C1', label = 'HH')
-axes[1].set_title('Lowman Insitu vs Unwrapped UAVSAR Snow Depth Changes')
+
+axes[1].set_title('Insitu vs Unwrapped UAVSAR Snow Depth Changes')
 axes[1].set_xlabel('Insitu')
 axes[1].set_ylabel('Unwrapped UAVSAR SD')
-plt.savefig('/bsuhome/zacharykeskinen/uavsar-validation/figures/insitu/insitu_uavsar_scatter.png')
+axes[1].legend(loc = 'lower right')
+
+# add RMSE, R, N to fig
+rmse, r, n = get_stats(df.dSD.values.ravel(), df.UV_int_VV_sd.values.ravel())
+axes[0].text(.01, .99, f'RMSE: {rmse:.3}, r: {r:.2}\nn = {n}', ha='left', va='top', transform=axes[0].transAxes)
+
+rmse, r, n = get_stats(df.dSD.values.ravel(), df.UV_unw_VV_sd.values.ravel())
+axes[1].text(.01, .99, f'RMSE: {rmse:.3}, r: {r:.2}\nn = {n}', ha='left', va='top', transform=axes[1].transAxes)
+
+
+plt.savefig('/bsuhome/zacharykeskinen/uavsar-validation/figures/insitu/insitu_uavsar_scatterv2.png')

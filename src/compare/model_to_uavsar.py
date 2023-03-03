@@ -18,6 +18,7 @@ for fp in ncs_dir.glob('*.sd.nc'):
     ds = xr.open_dataset(fp)
 
     diff_model = model.sel(time = ds.attrs['time2']) - model.sel(time = ds.attrs['time1'])
+    diff_model['cor'] = ds['cor'].rio.reproject_match(diff_model['swe'])
     diff_model['uavsar_dSD_int'] = ds['sd_delta_int'].rio.reproject_match(diff_model['swe'])
     if 'unw' in ds.data_vars:
         diff_model['uavsar_dSD_unw'] = ds['sd_delta_unw'].rio.reproject_match(diff_model['swe'])

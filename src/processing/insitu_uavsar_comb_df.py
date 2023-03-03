@@ -32,15 +32,23 @@ for f in ncs_dir.glob('*.sd.nc'):
     df2['dSD'] = df2['SD'] - df1['SD']
     df2['dTime'] = df2['end_datetime'] - df1['datetime']
     for i, r in df2.iterrows():
+        tol = 0.00090009 # ~0.001 degrees or ~100m
+        df2.loc[i, 'VV_cor'] = ds['cor'].sel(band = 'VV', y = slice(r.lat + tol, r.lat - tol), x = slice(r.lon - tol, r.lon + tol)).mean(skipna = True)
 
         for img_type, band in product(['int', 'unw'], ['VV','VH','HV','HH']):
             if img_type not in ds.data_vars or band not in ds.band:
                 continue
 
             tol = 0.00090009 # ~0.001 degrees or ~100m
-            df2.loc[i, f'UV_{img_type}_{band}_sd'] = ds[f'sd_delta_{img_type}'].sel(band = band, y = slice(r.lat + tol, r.lat - tol), x = slice(r.lon - tol, r.lon + tol)).mean(skipna = True)
+            data = ds[f'sd_delta_{img_type}'].sel(band = band, y = slice(r.lat + tol, r.lat - tol), x = slice(r.lon - tol, r.lon + tol))
+            data = data.where((data < 10000) & (data > -10000))
+            if ~np.isfinite(data.mean(skipna = True)) and img_type =='int':
+                print()
+            df2.loc[i, f'UV_{img_type}_{band}_sd'] = data.mean(skipna = True)
+    
+            
     
     insitu_UV = pd.concat([insitu_UV, df2.reset_index(names = 'site_name')], axis = 0)
 
 import warnings; warnings.filterwarnings('ignore', message='.*initial implementation of Parquet.*')
-insitu_UV.to_parquet('/bsuhome/zacharykeskinen/uavsar-validation/data/insitu/insitu_uavsar.parq')
+insitu_UV.to_parquet('/bsuhome/zacharykeskinen/uavsar-validation/data/insitu/insitu_uavsar_v2.parq')
