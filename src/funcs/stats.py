@@ -12,3 +12,14 @@ def get_stats(xs, ys):
     r, p = pearsonr(xs, ys)
 
     return rmse, r, len(xs)
+
+def clean_xs_ys(xs, ys):
+        # stack arrays
+    xs = np.hstack(xs)
+    ys = np.hstack(ys)
+
+    xs_tmp = xs[(~np.isnan(xs)) & (~np.isnan(ys)) & (np.isfinite(xs)) & (np.isfinite(ys))]
+    ys = ys[(~np.isnan(xs)) & (~np.isnan(ys))  & (np.isfinite(xs)) & (np.isfinite(ys))]
+    xs = xs_tmp
+
+    return xs, ys
