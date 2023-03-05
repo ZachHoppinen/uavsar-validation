@@ -21,6 +21,7 @@ This is a research repository comparing UAVSAR L-band InSAR images against snow 
     - [ ] Compare r2, rmse for individual types of observations
     - [ ] Create time series vs snotel sites of UAVSAR changes vs snotel changes
     - [ ] Compare r2, rmse for in-situ changes binned by coherence, snow depth, trees
+    - [ ] r2 and rmse for other insitu probed depths independent of setting phase
 
 - [ ] Model compare
     - [x] Compare r2, rmse of all model observations (100 m) vs UAVSAR SD delta
@@ -32,6 +33,8 @@ This is a research repository comparing UAVSAR L-band InSAR images against snow 
 - [ ] Lidar compare
     - [ ] Compare r2, rmse of summed SWE vs lidar for each location
     - [ ] Compare r2 of UAVSAR sd delta vs snotel SD - table with snotel SD change
+    - [ ] plot of r2 vs binned slope, aspect, tree %
+    - [ ] check covariance of independent datasets
 
 - [ ] Ancillary figures
     - [x] Figure showing UAVSAR flight box, insitu sites, lidar flight boxes
