@@ -42,15 +42,17 @@ for lidar_fp in lidar_dir.glob('*.sd.nc'):
 
         lidar_slope = slope(lidar['lidar-dem'].rio.reproject('EPSG:32611')).rio.reproject_match(lidar['lidar-sd'].sel(time = t))
 
+        print(f"Max: {lidar_slope.max()} and min : {lidar_slope.min()}")
         delta = 1 # degrees
         for high in tqdm(np.arange(delta, lidar_slope.max(), delta)):
             res = res.sort_index()
             low = high - delta
+            print(f'Running {low} to {high}')
             
             ds = ds_orig.copy(deep = True)
 
             lidar_sd = ds['lidar-sd'].sel(time = t).where((lidar_slope > low) & (lidar_slope < high))
-            lidar_sd.data = gaussian_filter(lidar_sd, 3)
+            # lidar_sd.data = gaussian_filter(lidar_sd, 3)
 
             ds = ds.sel(time = ds.snotel_dSWE > 0)
             
@@ -63,6 +65,7 @@ for lidar_fp in lidar_dir.glob('*.sd.nc'):
                 print(f"No values for {low}-{high}.")
                 rmse, r, n =  np.nan, np.nan, np.nan
             else:
+                print(f"Values found")
                 rmse, r, n = get_stats(xs, ys)
             
             loc = lidar_fp.name.replace('.sd.nc', '')
@@ -102,7 +105,7 @@ for lidar_fp in lidar_dir.glob('*.sd.nc'):
             ds = ds_orig.copy(deep = True)
 
             lidar_sd = ds['lidar-sd'].sel(time = t).where((cond > low) & (cond < high))
-            lidar_sd.data = gaussian_filter(lidar_sd, 3)
+            # lidar_sd.data = gaussian_filter(lidar_sd, 3)
 
             ds = ds.sel(time = ds.snotel_dSWE > 0)
             
@@ -154,7 +157,7 @@ for lidar_fp in lidar_dir.glob('*.sd.nc'):
             ds = ds_orig.copy(deep = True)
 
             lidar_sd = ds['lidar-sd'].sel(time = t).where((cond > low) & (cond < high))
-            lidar_sd.data = gaussian_filter(lidar_sd, 3)
+            # lidar_sd.data = gaussian_filter(lidar_sd, 3)
 
             ds = ds.sel(time = ds.snotel_dSWE > 0)
             
@@ -206,7 +209,7 @@ for lidar_fp in lidar_dir.glob('*.sd.nc'):
             ds = ds_orig.copy(deep = True)
 
             lidar_sd = ds['lidar-sd'].sel(time = t).where((cond > low) & (cond < high))
-            lidar_sd.data = gaussian_filter(lidar_sd, 3)
+            # lidar_sd.data = gaussian_filter(lidar_sd, 3)
 
             ds = ds.sel(time = ds.snotel_dSWE > 0)
             
@@ -257,7 +260,7 @@ for lidar_fp in lidar_dir.glob('*.sd.nc'):
             ds = ds_orig.copy(deep = True)
 
             lidar_sd = ds['lidar-sd'].sel(time = t).where((tree_density > low) & (tree_density < high))
-            lidar_sd.data = gaussian_filter(lidar_sd, 3)
+            # lidar_sd.data = gaussian_filter(lidar_sd, 3)
 
             ds = ds.sel(time = ds.snotel_dSWE > 0)
             
