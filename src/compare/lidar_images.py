@@ -63,6 +63,7 @@ for img_type in ['int','unw']:
                     dsd = depth_from_phase(ds_ts[f'232-{img_type}'], inc_angle = ds_ts['232-inc'], density = snotel_den)
                     dsd = dsd + ((ds_ts['snotel_dSWE'] / (snotel_den / 997)) - dsd.mean())
                     r = get_r(dsd, lidar_ds)
+                    print(f'R is {r} for {ts}')
                     if r > 0.1:
                         ds['sd-delta'].loc[dict(time = ts)] = dsd
 
@@ -72,7 +73,7 @@ for img_type in ['int','unw']:
 
             vmax = cum_sd232.quantile(0.9)
             vmin = cum_sd232.quantile(0.1)
-            # cum_sd232.data = gaussian_filter(cum_sd232, 2)
+            cum_sd232 = gaussian_filter(cum_sd232, 3)
             fig, axes = plt.subplots(1, 3, figsize = (20,10))
 
             lidar_ds.plot(vmin = 0, vmax = 3, ax = axes[0])
