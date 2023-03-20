@@ -182,7 +182,6 @@ for lidar_fp in lidar_dir.glob('*.sd.nc'):
     sntl_x, sntl_y = snotel_locs[lidar_fp.stem]
     
     for t in lidar.attrs['lidar_times']:
-        
         t = pd.to_datetime(t)
 
         ds_orig = lidar.sel(time = slice(t - pd.Timedelta('180 days'), t))
@@ -192,7 +191,6 @@ for lidar_fp in lidar_dir.glob('*.sd.nc'):
 
         delta = 5 # meters
         for high in tqdm(np.arange(delta, cond.max(), delta)):
-            res = res.sort_index()
             low = high - delta
             
             ds = ds_orig.copy(deep = True)
@@ -206,10 +204,7 @@ for lidar_fp in lidar_dir.glob('*.sd.nc'):
             xs, ys = clean_xs_ys(lidar_sd.values.ravel(), sum.values.ravel(), clean_zeros = True)
 
             if len(xs) < 2 or len(ys) < 2:
-                print(f"No values for {low}-{high}.")
-                rmse, r, n =  np.nan, np.nan, np.nan
-            else:
-                rmse, r, n = get_stats(xs, ys)
+                pass
             
             loc = lidar_fp.name.replace('.sd.nc', '')
             date = t.strftime('%Y-%m-%d')
