@@ -4,7 +4,7 @@
 #SBATCH -n 1 # total number of tasks requested
 #SBATCH -N 1 # number of nodes you want to run on
 #SBATCH -p bsudfq # queue (partition)
-#SBATCH -t 12:00:00 # run time (hh:mm:ss) - 1 minute in this example.
+#SBATCH -t 24:00:00 # run time (hh:mm:ss) - 1 minute in this example.
 
 echo "Starting."
 
