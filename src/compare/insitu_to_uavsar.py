@@ -33,24 +33,29 @@ axes[1].set_ylabel('Unwrapped UAVSAR SD')
 axes[1].legend(loc = 'lower right')
 
 # add RMSE, R, N to fig
-rmse, r, n = get_stats(df.dSD.values.ravel(), df.UV_int_VV_sd.values.ravel())
+
+rmse, r, n = get_stats(df.dSD.values.ravel(), df.UV_int_VV_sd.values.ravel(), clean = True)
 axes[0].text(.01, .99, f'VV - RMSE: {rmse:.3}, r: {r:.2}\nn = {n}', ha='left', va='top', transform=axes[0].transAxes)
-rmse, r, n = get_stats(df.dSD.values.ravel(), df.UV_int_VH_sd.values.ravel())
+rmse, r, n = get_stats(df.dSD.values.ravel(), df.UV_int_VH_sd.values.ravel(), clean = True)
 axes[0].text(.01, .92, f'VH - RMSE: {rmse:.3}, r: {r:.2}\nn = {n}', ha='left', va='top', transform=axes[0].transAxes)
 
-rmse, r, n = get_stats(df.dSD.values.ravel(), df.UV_unw_VV_sd.values.ravel())
+rmse, r, n = get_stats(df.dSD.values.ravel(), df.UV_unw_VV_sd.values.ravel(), clean = True)
 axes[1].text(.01, .99, f'VV - RMSE: {rmse:.3}, r: {r:.2}\nn = {n}', ha='left', va='top', transform=axes[1].transAxes)
-rmse, r, n = get_stats(df.dSD.values.ravel(), df.UV_unw_VH_sd.values.ravel())
+rmse, r, n = get_stats(df.dSD.values.ravel(), df.UV_unw_VH_sd.values.ravel(), clean = True)
 axes[1].text(.01, .92, f'VH - RMSE: {rmse:.3}, r: {r:.2}\nn = {n}', ha='left', va='top', transform=axes[1].transAxes)
 
 for ax in axes.ravel():
-    ax.set_xlabel('')
-    ax.set_ylabel('')
+    ax.set_xlabel('In Situ Snow Depth Change')
+    ax.set_ylabel('UAVSAR Snow Depth Change')
     ax.plot([-0.3,1], [-0.3, 1], label = '1-to-1')
 
 plt.savefig('/bsuhome/zacharykeskinen/uavsar-validation/figures/insitu/insitu_uavsar_scatterv3.png')
 
-# plot up subsets of images (trees, coherence, inc, wetness)
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from stats import get_stats
 
 df_full = pd.read_parquet('/bsuhome/zacharykeskinen/uavsar-validation/data/insitu/insitu_uavsar_v2.parq')
 
@@ -120,11 +125,18 @@ for i, c in enumerate(sorted(df_full.cor_class.unique(), reverse=True)):
     axes[1, 1].text(.01, .99 - i*0.13, f'{name} - RMSE: {rmse:.2}, r: {r:.2}\nn = {n}', ha='left', va='top', transform = axes[1,1].transAxes)
 
 for ax in axes.ravel():
+    ax.plot([-0.5,1], [-0.5, 1], label = '1-to-1')
     ax.set_xlabel('')
     ax.set_ylabel('')
-    ax.plot([-0.5,1], [-0.5, 1], label = '1-to-1')
+
+for i, ax_r in enumerate(axes):
+    for j, ax in enumerate(ax_r):
+        if i == 1:
+            ax.set_xlabel('In Situ Snow Depth Change')
+        if j == 0:
+            ax.set_ylabel('UAVSAR Snow Depth Change')
 
 plt.suptitle('In situ to UAVSAR Snow Depth Change Retrieval Accuracy')
-plt.savefig('/bsuhome/zacharykeskinen/uavsar-validation/figures/insitu/insitu_binned_scatter.png')
+plt.savefig('/bsuhome/zacharykeskinen/uavsar-validation/figures/insitu/insitu_binned_scatter_v2.png')
 
 

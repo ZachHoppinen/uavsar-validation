@@ -1,6 +1,9 @@
 import numpy as np
 
-def get_stats(xs, ys):
+def get_stats(xs, ys, clean = True):
+
+    if clean:
+        xs, ys = clean_xs_ys(xs, ys)
 
     from sklearn.metrics import mean_squared_error
     rmse = mean_squared_error(xs, ys, squared=False)
@@ -25,3 +28,11 @@ def clean_xs_ys(xs, ys, clean_zeros = False):
         xs = xs_tmp
 
     return xs, ys
+
+def get_r(ds, lidar):
+    xs = lidar.values.ravel()
+    ys = ds.values.ravel()
+
+    xs, ys = clean_xs_ys(xs, ys, clean_zeros = True)
+    r, p = pearsonr(xs, ys)
+    return r
