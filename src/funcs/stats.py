@@ -1,6 +1,6 @@
 import numpy as np
 
-def get_stats(xs, ys, clean = True):
+def get_stats(xs, ys, clean = True, bias = False):
 
     if clean:
         xs, ys = clean_xs_ys(xs, ys)
@@ -10,6 +10,10 @@ def get_stats(xs, ys, clean = True):
 
     from scipy.stats import pearsonr
     r, p = pearsonr(xs, ys)
+
+    if bias:
+        MBE = np.mean(ys - xs)
+        return rmse, r, len(xs), MBE
 
     return rmse, r, len(xs)
 
