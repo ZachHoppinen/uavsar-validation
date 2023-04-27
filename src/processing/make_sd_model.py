@@ -21,6 +21,7 @@ for fp in ncs_dir.glob('*.sd.nc'):
 
     diff_model = model.sel(time = ds.attrs['time2']) - model.sel(time = ds.attrs['time1'])
     diff_model['cor'] = ds['cor'].rio.reproject_match(diff_model['swe'])
+    diff_model['inc'] = ds['inc'].rio.reproject_match(diff_model['swe'])
     diff_model['melt_t1'] = model.sel(time = ds.attrs['time1'])['melt']
     diff_model['melt_t2'] = model.sel(time = ds.attrs['time2'])['melt']
     diff_model['swe_t1'] = model.sel(time = ds.attrs['time1'])['swe']

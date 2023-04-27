@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 def get_stats(xs, ys, clean = True, bias = False):
 
@@ -40,3 +41,7 @@ def get_r(ds, lidar):
     xs, ys = clean_xs_ys(xs, ys, clean_zeros = True)
     r, p = pearsonr(xs, ys)
     return r
+
+def bootstrap(df):
+    randlist = pd.DataFrame(index=np.random.randint(len(df), size=len(df)))
+    df.merge(randlist, left_index=True, right_index=True, how='right')
