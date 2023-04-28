@@ -27,6 +27,7 @@ for fp in ncs_dir.glob('*.sd.nc'):
     diff_model['swe_t1'] = model.sel(time = ds.attrs['time1'])['swe']
     diff_model['swe_t2'] = model.sel(time = ds.attrs['time2'])['swe']
     diff_model['uavsar_dSD_int'] = ds['sd_delta_int'].rio.reproject_match(diff_model['swe'])
+    diff_model['cum_melt'] = model.sel(time = slice(ds.attrs['time1'], ds.attrs['time2']))['melt'].sum(dim = ['time'])
     lc = lc.squeeze('band')
     lc = lc.rio.reproject_match(diff_model['swe'])
     diff_model['lc'] = lc['band_data']
