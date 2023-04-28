@@ -1,12 +1,20 @@
 import numpy as np
+import pandas as pd
 
-def get_stats(xs, ys):
+def get_stats(xs, ys, clean = True, bias = False):
+
+    if clean:
+        xs, ys = clean_xs_ys(xs, ys)
 
     from sklearn.metrics import mean_squared_error
     rmse = mean_squared_error(xs, ys, squared=False)
 
     from scipy.stats import pearsonr
     r, p = pearsonr(xs, ys)
+
+    if bias:
+        MBE = np.mean(ys - xs)
+        return rmse, r, len(xs), MBE
 
     return rmse, r, len(xs)
 
@@ -25,3 +33,15 @@ def clean_xs_ys(xs, ys, clean_zeros = False):
         xs = xs_tmp
 
     return xs, ys
+
+def get_r(ds, lidar):
+    xs = lidar.values.ravel()
+    ys = ds.values.ravel()
+
+    xs, ys = clean_xs_ys(xs, ys, clean_zeros = True)
+    r, p = pearsonr(xs, ys)
+    return r
+
+def bootstrap(df):
+    randlist = pd.DataFrame(index=np.random.randint(len(df), size=len(df)))
+    df.merge(randlist, left_index=True, right_index=True, how='right')

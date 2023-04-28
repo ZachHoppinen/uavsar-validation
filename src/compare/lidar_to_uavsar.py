@@ -386,3 +386,205 @@ for lidar_fp in lidar_dir.glob('*.all.nc'):
 
             plt.savefig(out_fp)
             plt.clf()
+
+# subset out for variables
+
+import numpy as np
+import pandas as pd
+import xarray as xr
+import rioxarray as rxa
+
+from pathlib import Path
+from stats import get_stats, clean_xs_ys
+
+from scipy.ndimage import gaussian_filter
+
+from xrspatial import slope, aspect, curvature
+
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+
+from uavsar_pytools.snow_depth_inversion import depth_from_phase, phase_from_depth
+
+snotel_locs = {'Dry_Creek.sd': [-116.09685, 43.76377], 'Banner.sd': [-115.23447, 44.30342], 'Mores.sd': [-115.66588, 43.932]}
+
+lidar_dir = Path('/bsuhome/zacharykeskinen/scratch/data/uavsar/ncs/lidar')
+
+for lidar_fp in lidar_dir.glob('*.sd.nc'):
+    print(lidar_fp)
+    lidar = xr.open_dataset(lidar_fp)
+
+    if isinstance(lidar.attrs['lidar_times'] , str):
+        lidar.attrs['lidar_times'] = [lidar.attrs['lidar_times']]
+    
+    sntl_x, sntl_y = snotel_locs[lidar_fp.stem]
+    
+    for t in lidar.attrs['lidar_times']:
+        fig, axes = plt.subplots(1, 3, figsize = (12, 6))
+        print(t)
+
+        t = pd.to_datetime(t)
+        ds = lidar.sel(time = slice(t - pd.Timedelta('180 days'), t))
+        ds = ds.sel(band = 'VV')
+
+        # trees = ds['lidar-vh'].sel(time = t)
+        # elev = ds['lidar-dem']
+        # lidar_slope = slope(lidar['lidar-dem'].rio.reproject('EPSG:32611')).rio.reproject_match(lidar['lidar-sd'].sel(time = t))
+        # lidar_aspect = aspect(ds['lidar-dem'])
+        # lidar_curvature = curvature(ds['lidar-dem'])
+        
+        tol = 0.00090009 # ~0.001 degrees or ~100m
+
+        for ds_t in ds.time:
+
+            sub = ds.sel(time = ds_t)
+            if sub['232-int'].sum() == 0:
+                ds['232-sd_delta_int'].loc[dict(time = ds_t)] = np.nan
+                continue
+            
+            if sub['snotel_dSWE'] > 0:
+                cur_phase = sub['232-int'].sel(x = slice(sntl_x - tol, sntl_x + tol), y = slice(sntl_y + tol, sntl_y - tol)).mean()
+                sntl_inc = sub['232-inc'].sel(x = slice(sntl_x - tol, sntl_x + tol), y = slice(sntl_y + tol, sntl_y - tol)).mean()
+                snotel_sd_change = sub['snotel_dSWE'] * (997 / 250)
+                sd_phase = phase_from_depth(snotel_sd_change, sntl_inc, density = 250)
+
+                data = depth_from_phase(sub['232-int'] + (sd_phase - cur_phase), sub['232-inc'], density = 250)
+                # data = gaussian_filter(data, 3)
+                # trees below snow surface?
+                # data = data.where(trees > 5)
+                # low angle
+                data = data.where(lidar_slope < 10)
+                # south faces
+                # data = data.where((lidar_aspect) > 145 & (lidar_aspect < 220))
+
+                ds['232-sd_delta_int'].loc[dict(time = ds_t)] = data
+
+            else:
+                ds['232-sd_delta_int'].loc[dict(time = ds_t)] = np.nan
+        
+        sum = ds['232-sd_delta_int'].sum(dim = 'time')
+
+        ds['lidar-sd'].loc[dict(time = t)] = gaussian_filter(ds['lidar-sd'].sel(time = t), sigma = 3)
+        ds['lidar-sd'].sel(time = t).where(lidar_slope < 10).plot(ax = axes[0], vmin = 0, vmax = 3)
+
+        sum.where(~ds['lidar-sd'].sel(time = t).isnull()).plot(ax = axes[1], vmin = 0, vmax = 3)
+
+        xs, ys = clean_xs_ys(ds['lidar-sd'].sel(time = t).values.ravel(), sum.values.ravel())
+        xs_tmp = xs[(xs != 0) & (ys != 0)]
+        ys = ys[(xs != 0) & (ys != 0)]
+        xs = xs_tmp
+
+        axes[2].hist2d(xs, ys, bins = 100, cmap = mpl.cm.inferno, range = [[0,3.5],[0,3.5]]) # , norm = mpl.colors.LogNorm()
+
+        rmse, r, n = get_stats(xs, ys)
+        axes[2].text(.01, .99, f'RMSE: {rmse:.2}, r: {r:.2}\nn = {len(xs):.2e}', ha='left', va='top', transform=axes[2].transAxes, color = 'white')
+
+        plt.show()
+
+# Plot up only images with r correlation above 0.1
+
+import xarray as xr
+import numpy as np
+import pandas as pd
+import rioxarray as rxa
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from pathlib import Path
+import matplotlib as mpl
+import pandas as pd
+
+from scipy.ndimage import gaussian_filter
+
+from stats import clean_xs_ys
+from scipy.stats import pearsonr
+from uavsar_pytools.snow_depth_inversion import depth_from_phase
+
+# import warnings
+# warnings.filterwarnings("ignore")
+
+# loop through each flight pair and calculate rmse, r2, plot
+lidar = None
+
+# check if we are on borah or local
+import socket
+hn = socket.gethostname()
+lidar_dir = Path('/bsuhome/zacharykeskinen/scratch/data/uavsar/ncs/lidar')
+if hn == 'Zachs-MacBook-Pro.local':
+    lidar_dir = Path('/Users/zachkeskinen/Desktop/')
+
+for img_type in ['int','unw']:
+    print(img_type)
+    # for lidar filepath
+    for lidar_fp in lidar_dir.glob('*.sd.nc'):
+        print(lidar_fp)
+        lidar = xr.open_dataset(lidar_fp)
+
+        # single times are strings not lists
+        if isinstance(lidar.attrs['lidar_times'] , str):
+            lidar.attrs['lidar_times'] = [lidar.attrs['lidar_times']]
+
+        for t in lidar.attrs['lidar_times']:
+
+            t = pd.to_datetime(t)
+            lidar_ds = lidar['lidar-sd'].sel(time = t)
+            # slice images that occured that year
+            ds = lidar.sel(time = slice(t - pd.Timedelta('180 days'), t + pd.Timedelta('90 days')))
+            ds = ds.where(ds.snotel_dSWE > 0)
+            ds = ds.sel(band = 'VV')
+            ds['sd-delta'] = xr.zeros_like(ds['232-int'])
+            
+            for ts in ds.time:
+                ds_ts = ds.sel(time = ts)
+                snotel_den = np.abs((ds_ts['snotel_dSWE'] / ds_ts['snotel_dSD'] * 997).data.ravel()[0])
+                if ds_ts[f'232-{img_type}'].sum() > 0:
+                    dsd = depth_from_phase(ds_ts[f'232-{img_type}'], inc_angle = ds_ts['232-inc'], density = snotel_den)
+                    dsd = dsd + ((ds_ts['snotel_dSWE'] / (snotel_den / 997)) - dsd.mean())
+                    r = get_r(dsd, lidar_ds)
+                    if r > 0.1:
+                        ds['sd-delta'].loc[dict(time = ts)] = dsd
+
+            cum_sd232 = ds['sd-delta'].sum(dim = 'time', skipna = True).where(~lidar_ds.isnull())
+            cum_sd232 = cum_sd232.where((cum_sd232 < 0.01) | (cum_sd232 > 0.01)) 
+            lidar_ds = lidar_ds.where(lidar_ds > 0.001)
+
+            vmax = cum_sd232.quantile(0.9)
+            vmin = cum_sd232.quantile(0.1)
+            # cum_sd232.data = gaussian_filter(cum_sd232, 2)
+            fig, axes = plt.subplots(1, 3, figsize = (20,10))
+
+            lidar_ds.plot(vmin = 0, vmax = 3, ax = axes[0])
+            cum_sd232.plot(vmin = vmin, vmax = vmax, ax = axes[1], cmap = 'viridis')
+
+            xs = lidar_ds.values.ravel()
+            ys = cum_sd232.values.ravel()
+
+            xs, ys = clean_xs_ys(xs, ys, clean_zeros = True)
+
+            range = [[-.2, 5.5], [-.2, np.max(ys) + 0.3]]
+            axes[2].hist2d(xs, ys, bins = 100, norm=mpl.colors.LogNorm(), cmap=mpl.cm.inferno, range = range)
+
+            r, p = pearsonr(xs, ys)
+            axes[2].text(.01, .99, f'r: {r:.2}\nn = {len(ys):.2e}', ha = 'left', va = 'top', transform = axes[2].transAxes)
+            plt.tight_layout()
+            # plt.show()
+            plt.savefig(f"/bsuhome/zacharykeskinen/uavsar-validation/figures/lidar/snotel/{img_type}_{lidar.attrs['site']}_{t.strftime('%Y-%m-%d')}.png")
+            plt.close()
+
+## Plot up r2 values after producing rs for each subset of trees, inc, etc
+
+import numpy as np
+import pandas as pd
+import xarray as xr
+import rioxarray as rxa
+from tqdm import tqdm
+import matplotlib.pyplot as plt
+from pathlib import Path
+from stats import get_stats, clean_xs_ys
+
+df = pd.read_csv('../../results/lidar/inc.csv', index_col=['stat', 'loc','date'])
+sub = df[df.loc[('n')] > 1000]
+# sub = sub.T/sub.max(axis = 1)
+sub = sub.T
+fig, ax = plt.subplots(figsize = (12,8))
+sub.T.loc[('r')].T.rolling(5).mean().plot(ax = ax)
+sub.T.loc[('r')].T.rolling(5).mean().mean(axis = 1).plot(ax = ax, color = 'black', linewidth = 5)

@@ -19,6 +19,8 @@ lidar_dir = Path('/bsuhome/zacharykeskinen/scratch/data/uavsar/ncs/lidar')
 if hn == 'Zachs-MacBook-Pro.local':
     lidar_dir = Path('/Users/zachkeskinen/Desktop/')
 
+out_dir = Path('/bsuhome/zacharykeskinen/uavsar-validation/results/lidar')
+
 ## Slope
 
 # res = pd.DataFrame(index = pd.MultiIndex.from_arrays([[],[],[]], names=('stat', 'loc', 'date')))
@@ -40,24 +42,30 @@ if hn == 'Zachs-MacBook-Pro.local':
 
 #         lidar_slope = slope(lidar['lidar-dem'].rio.reproject('EPSG:32611')).rio.reproject_match(lidar['lidar-sd'].sel(time = t))
 
-#         delta = 5 # degrees
+#         print(f"Max: {lidar_slope.max()} and min : {lidar_slope.min()}")
+#         delta = 1 # degrees
 #         for high in tqdm(np.arange(delta, lidar_slope.max(), delta)):
+#             res = res.sort_index()
 #             low = high - delta
+#             print(f'Running {low} to {high}')
             
 #             ds = ds_orig.copy(deep = True)
 
 #             lidar_sd = ds['lidar-sd'].sel(time = t).where((lidar_slope > low) & (lidar_slope < high))
+#             # lidar_sd.data = gaussian_filter(lidar_sd, 3)
 
 #             ds = ds.sel(time = ds.snotel_dSWE > 0)
             
 #             sum = ds['232-sd_delta_int'].sum(dim = 'time')
+#             sum.data = gaussian_filter(sum, 3)
 
 #             xs, ys = clean_xs_ys(lidar_sd.values.ravel(), sum.values.ravel(), clean_zeros = True)
 
-#             if len(xs) == 0 or len(ys) == 0:
+#             if len(xs) < 2 or len(ys) < 2:
 #                 print(f"No values for {low}-{high}.")
 #                 rmse, r, n =  np.nan, np.nan, np.nan
 #             else:
+#                 print(f"Values found")
 #                 rmse, r, n = get_stats(xs, ys)
             
 #             loc = lidar_fp.name.replace('.sd.nc', '')
@@ -66,7 +74,7 @@ if hn == 'Zachs-MacBook-Pro.local':
 #             for stat_name, stat in zip(['n', 'r', 'rmse'], [n, r, rmse]):
 #                 res.loc[(stat_name, loc, date), f'{low}-{high}'] = stat
 
-# res.to_csv('/Users/zachkeskinen/Documents/uavsar-validation/results/lidar-rs/slope.csv')
+# res.to_csv(out_dir.joinpath('slope.csv'))
 
 # ## Aspect
 
@@ -89,21 +97,24 @@ if hn == 'Zachs-MacBook-Pro.local':
 
 #         cond = aspect(lidar['lidar-dem'].rio.reproject('EPSG:32611')).rio.reproject_match(lidar['lidar-sd'].sel(time = t))
 
-#         delta = 5 # degrees
+#         delta = 1 # degrees
 #         for high in tqdm(np.arange(delta, cond.max(), delta)):
+#             res = res.sort_index()
 #             low = high - delta
             
 #             ds = ds_orig.copy(deep = True)
 
 #             lidar_sd = ds['lidar-sd'].sel(time = t).where((cond > low) & (cond < high))
+#             # lidar_sd.data = gaussian_filter(lidar_sd, 3)
 
 #             ds = ds.sel(time = ds.snotel_dSWE > 0)
             
 #             sum = ds['232-sd_delta_int'].sum(dim = 'time')
+#             sum.data = gaussian_filter(sum, 3)
 
 #             xs, ys = clean_xs_ys(lidar_sd.values.ravel(), sum.values.ravel(), clean_zeros = True)
 
-#             if len(xs) == 0 or len(ys) == 0:
+#             if len(xs) < 2 or len(ys) < 2:
 #                 print(f"No values for {low}-{high}.")
 #                 rmse, r, n =  np.nan, np.nan, np.nan
 #             else:
@@ -115,7 +126,7 @@ if hn == 'Zachs-MacBook-Pro.local':
 #             for stat_name, stat in zip(['n', 'r', 'rmse'], [n, r, rmse]):
 #                 res.loc[(stat_name, loc, date), f'{low}-{high}'] = stat
 
-# res.to_csv('/Users/zachkeskinen/Documents/uavsar-validation/results/lidar-rs/aspect.csv')
+# res.to_csv(out_dir.joinpath('aspect.csv'))
 
 # ## Incidence Angle
 
@@ -138,25 +149,28 @@ if hn == 'Zachs-MacBook-Pro.local':
 
 #         cond = np.rad2deg(lidar['232-inc'].isel(time = 0))
 
-#         delta = 5 # degrees
-#         for high in tqdm(np.arange(delta, cond.max(), delta)):
-#             low = high - delta
+        delta = 1 # degrees
+        for high in tqdm(np.arange(delta, cond.max(), delta)):
+            res = res.sort_index()
+            low = high - delta
             
 #             ds = ds_orig.copy(deep = True)
 
-#             lidar_sd = ds['lidar-sd'].sel(time = t).where((cond > low) & (cond < high))
+            lidar_sd = ds['lidar-sd'].sel(time = t).where((cond > low) & (cond < high))
+            # lidar_sd.data = gaussian_filter(lidar_sd, 3)
 
 #             ds = ds.sel(time = ds.snotel_dSWE > 0)
             
-#             sum = ds['232-sd_delta_int'].sum(dim = 'time')
+            sum = ds['232-sd_delta_int'].sum(dim = 'time')
+            sum.data = gaussian_filter(sum, 3)
 
 #             xs, ys = clean_xs_ys(lidar_sd.values.ravel(), sum.values.ravel(), clean_zeros = True)
 
-#             if len(xs) == 0 or len(ys) == 0:
-#                 print(f"No values for {low}-{high}.")
-#                 rmse, r, n =  np.nan, np.nan, np.nan
-#             else:
-#                 rmse, r, n = get_stats(xs, ys)
+            if len(xs) < 2 or len(ys) < 2:
+                print(f"No values for {low}-{high}.")
+                rmse, r, n =  np.nan, np.nan, np.nan
+            else:
+                rmse, r, n = get_stats(xs, ys)
             
 #             loc = lidar_fp.name.replace('.sd.nc', '')
 #             date = t.strftime('%Y-%m-%d')
@@ -164,7 +178,7 @@ if hn == 'Zachs-MacBook-Pro.local':
 #             for stat_name, stat in zip(['n', 'r', 'rmse'], [n, r, rmse]):
 #                 res.loc[(stat_name, loc, date), f'{low}-{high}'] = stat
 
-# res.to_csv('/Users/zachkeskinen/Documents/uavsar-validation/results/lidar-rs/inc.csv')
+res.to_csv(out_dir.joinpath('inc.csv'))
 
 # tree height
 
@@ -188,26 +202,25 @@ if hn == 'Zachs-MacBook-Pro.local':
 
 #         cond = lidar['lidar-vh'].sel(time = t)
 
-#         delta = 5 # meters
-#         for high in tqdm(np.arange(delta, cond.max(), delta)):
-#             res = res.sort_index()
-#             low = high - delta
+        delta = 1 # meters
+        for high in tqdm(np.arange(delta, cond.max(), delta)):
+            res = res.sort_index()
+            low = high - delta
             
 #             ds = ds_orig.copy(deep = True)
 
-#             lidar_sd = ds['lidar-sd'].sel(time = t).where((cond > low) & (cond < high))
+            lidar_sd = ds['lidar-sd'].sel(time = t).where((cond > low) & (cond < high))
+            # lidar_sd.data = gaussian_filter(lidar_sd, 3)
 
 #             ds = ds.sel(time = ds.snotel_dSWE > 0)
             
-#             sum = ds['232-sd_delta_int'].sum(dim = 'time')
+            sum = ds['232-sd_delta_int'].sum(dim = 'time')
+            sum.data = gaussian_filter(sum, 3)
 
 #             xs, ys = clean_xs_ys(lidar_sd.values.ravel(), sum.values.ravel(), clean_zeros = True)
 
-#             if len(xs) < 2 or len(ys) < 2:
-#                 print(f"No values for {low}-{high}.")
-#                 rmse, r, n =  np.nan, np.nan, np.nan
-#             else:
-#                 rmse, r, n = get_stats(xs, ys)
+            if len(xs) < 2 or len(ys) < 2:
+                pass
             
 #             loc = lidar_fp.name.replace('.sd.nc', '')
 #             date = t.strftime('%Y-%m-%d')
@@ -215,7 +228,7 @@ if hn == 'Zachs-MacBook-Pro.local':
 #             for stat_name, stat in zip(['n', 'r', 'rmse'], [n, r, rmse]):
 #                 res.loc[(stat_name, loc, date), f'{low}-{high}'] = stat
 
-# res.to_csv('/Users/zachkeskinen/Documents/uavsar-validation/results/lidar-rs/tree_height.csv')
+res.to_csv(out_dir.joinpath('tree_height.csv'))
 
 # tree density
 
@@ -240,7 +253,7 @@ for lidar_fp in lidar_dir.glob('*.sd.nc'):
         trees = xr.where(tree_height > 5, 0, 1).where(~tree_height.isnull())
         tree_density = trees.rolling(x = 5, y = 5).sum()/25
 
-        delta = 0.1 # percentage (10 % )
+        delta = 0.01 # percentage (10 % )
         for high in tqdm(np.arange(delta, tree_density.max(), delta)):
             res = res.sort_index()
             low = high - delta
@@ -248,14 +261,16 @@ for lidar_fp in lidar_dir.glob('*.sd.nc'):
             ds = ds_orig.copy(deep = True)
 
             lidar_sd = ds['lidar-sd'].sel(time = t).where((tree_density > low) & (tree_density < high))
+            # lidar_sd.data = gaussian_filter(lidar_sd, 3)
 
             ds = ds.sel(time = ds.snotel_dSWE > 0)
             
             sum = ds['232-sd_delta_int'].sum(dim = 'time')
+            sum.data = gaussian_filter(sum, 3)
 
             xs, ys = clean_xs_ys(lidar_sd.values.ravel(), sum.values.ravel(), clean_zeros = True)
 
-            if len(xs) == 0 or len(ys) == 0:
+            if len(xs) < 2 or len(ys) < 2:
                 print(f"No values for {low}-{high}.")
                 rmse, r, n =  np.nan, np.nan, np.nan
             else:
@@ -267,4 +282,4 @@ for lidar_fp in lidar_dir.glob('*.sd.nc'):
             for stat_name, stat in zip(['n', 'r', 'rmse'], [n, r, rmse]):
                 res.loc[(stat_name, loc, date), f'{low}-{high}'] = stat
 
-res.to_csv('/Users/zachkeskinen/Documents/uavsar-validation/results/lidar-rs/tree_density.csv')
+res.to_csv(out_dir.joinpath('tree_density.csv'))

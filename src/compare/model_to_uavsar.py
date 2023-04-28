@@ -187,3 +187,151 @@ for ax in axes:
     ctx.add_basemap(ax = ax, crs = 'EPSG:4326', source = ctx.providers.Stamen.Terrain)
 
 plt.savefig('/bsuhome/zacharykeskinen/uavsar-validation/figures/model/mean_maps.png')
+
+# binned by conditions
+
+from stats import get_stats
+import xarray as xr
+import numpy as np
+import rioxarray as rxa
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+def clean_xs_ys(xs, ys):
+        # stack arrays
+    xs = np.hstack(xs)
+    ys = np.hstack(ys)
+
+    xs_tmp = xs[(~np.isnan(xs)) & (~np.isnan(ys)) & (np.isfinite(xs)) & (np.isfinite(ys))]
+    ys = ys[(~np.isnan(xs)) & (~np.isnan(ys))  & (np.isfinite(xs)) & (np.isfinite(ys))]
+    xs = xs_tmp
+
+    return xs, ys
+
+#https://www.mrlc.gov/downloads/sciweb1/shared/mrlc/metadata/nlcd_2019_land_cover_l48_20210604.xml
+evergreen = [42]
+decidous = [41, 43] # and mixed
+open = [12, 31, 52, 71]
+water = [11, 90, 95]
+developed = [21, 22, 23, 24, 81, 82]
+
+fig = plt.figure(constrained_layout=True, figsize = (12, 12))
+fig.suptitle('UAVSAR SWE Retrievals vs SNOWMODEL')
+ncs_dir = Path('/bsuscratch/zacharykeskinen/data/uavsar/ncs/model')
+
+# create 3x1 subfigs
+subfigs = fig.subfigures(nrows=3, ncols=1)
+for row, subfig in enumerate(subfigs):
+
+
+    # create 1x3 subplots per subfig
+    axes = subfig.subplots(nrows=1, ncols=3)
+
+        # identity line
+    for ax in axes.ravel():
+        ax.plot([-1,1], [-1,1], label = '1-to-1')
+
+    if row == 0:
+        subfig.suptitle(f'Coherence', fontweight = 'bold')
+        for i, (coh_low, coh_high) in enumerate([[0, 0.3], [0.3, 0.6],[0.6, 1]]):
+            xs = []
+            ys = []
+            var = f'uavsar_dSD_unw'
+            for fp in ncs_dir.glob('*.sd.model.nc'):
+                ds = xr.open_dataset(fp)
+                # ds = ds.where(~ds['lc'].isin(water.extend(developed)))
+                ds = ds.where((ds['cor'].sel(band = 'VV') < coh_high) & (ds['cor'].sel(band = 'VV') > coh_low))
+
+                if var in ds.data_vars:
+                    xs.append(ds['swe'].values.ravel())
+                    ys.append(ds[var].sel(band = 'VV').values.ravel() * (ds.attrs['mean_density']/ 997))
+
+            xs, ys = clean_xs_ys(xs, ys)
+
+            rmse, r, n = get_stats(xs, ys)
+
+            axes[i].hist2d(xs, ys, bins = 100, norm=mpl.colors.LogNorm(), cmap=mpl.cm.inferno)
+
+            axes[i].text(.01, .99, f'RMSE: {rmse:.2}, r: {r:.2}\nn = {len(xs):.2e}', ha='left', va='top', transform=axes[i].transAxes)
+            axes[i].set_title(f'Coherence {coh_low} - {coh_high}')
+
+            if i == 0:
+                axes[i].set_ylabel('UAVSAR SWE Change')
+            else:
+                axes[i].set_yticks([])
+
+            # axes[i].set_xticks([])
+        
+    if row == 1:
+        subfig.suptitle(f'Snow Wetness', fontweight = 'bold')
+        for i, (low, high) in enumerate([[0, 0.001], [0.001, 0.006],[0.006, 0.013]]):
+            xs = []
+            ys = []
+            var = f'uavsar_dSD_unw'
+
+            for fp in ncs_dir.glob('*.sd.model.nc'):
+                ds = xr.open_dataset(fp)
+                # ds = ds.where(~ds['lc'].isin(water.extend(developed)))
+                ds['melt_sum'] = ds['melt_t1'] + ds['melt_t2']
+                ds = ds.where((ds['melt_sum'] < high) & (ds['melt_sum'] > low))
+
+                if var in ds.data_vars:
+                    xs.append(ds['swe'].values.ravel())
+                    ys.append(ds[var].sel(band = 'VV').values.ravel() * (ds.attrs['mean_density']/ 997))
+            xs, ys = clean_xs_ys(xs, ys)
+
+            rmse, r, n = get_stats(xs, ys)
+
+            axes[i].hist2d(xs, ys, bins = 100, norm=mpl.colors.LogNorm(), cmap=mpl.cm.inferno)
+
+            axes[i].text(.01, .99, f'RMSE: {rmse:.2}, r: {r:.2}\nn = {len(xs):.2e}', ha='left', va='top', transform=axes[i].transAxes)
+            axes[i].set_title(f'Melt {low} - {high}')
+
+            if i == 0:
+                axes[i].set_ylabel('UAVSAR SWE Change')
+            else:
+                axes[i].set_yticks([])
+            # axes[i].set_xticks([])
+    
+    if row == 2:
+        subfig.suptitle(f'Land Cover', fontweight = 'bold')
+        for i, (lc_list) in enumerate([open, decidous, evergreen]):
+            xs = []
+            ys = []
+            var = f'uavsar_dSD_unw'
+
+            for fp in ncs_dir.glob('*.sd.model.nc'):
+                ds = xr.open_dataset(fp)
+                # ds = ds.where(~ds['lc'].isin(water.extend(developed)))
+                ds = ds.where(ds['lc'].isin(lc_list))
+
+                if var in ds.data_vars:
+                    xs.append(ds['swe'].values.ravel())
+                    ys.append(ds[var].sel(band = 'VV').values.ravel() * (ds.attrs['mean_density']/ 997))
+            xs, ys = clean_xs_ys(xs, ys)
+
+            rmse, r, n = get_stats(xs, ys)
+
+            axes[i].hist2d(xs, ys, bins = 100, norm = mpl.colors.LogNorm(), cmap=mpl.cm.inferno)
+
+            axes[i].text(.01, .99, f'RMSE: {rmse:.2}, r: {r:.2}\nn = {len(xs):.2e}', ha='left', va='top', transform=axes[i].transAxes)
+            if i == 0:
+                axes[i].set_title(f'Open')
+                axes[i].set_ylabel('UAVSAR SWE Change')
+            elif i == 1:
+                axes[i].set_title('Deciduous')
+                axes[i].set_yticks([])
+
+            elif i == 2:
+                axes[i].set_title('Evergreen')
+                axes[i].set_yticks([])
+            axes[i].set_xlabel('Modeled SWE Change')
+
+
+
+for ax in fig.get_axes():
+    ax.set_xlim(-0.21, 0.2)
+    ax.set_ylim(-0.3, 0.3)
+
+plt.savefig('/bsuhome/zacharykeskinen/uavsar-validation/figures/model/modeling_binned_v2.png')
