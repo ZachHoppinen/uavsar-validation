@@ -21,199 +21,201 @@ if hn == 'Zachs-MacBook-Pro.local':
 
 ## Slope
 
-res = pd.DataFrame(index = pd.MultiIndex.from_arrays([[],[],[]], names=('stat', 'loc', 'date')))
+# res = pd.DataFrame(index = pd.MultiIndex.from_arrays([[],[],[]], names=('stat', 'loc', 'date')))
 
-for lidar_fp in lidar_dir.glob('*.sd.nc'):
-    print(lidar_fp)
+# for lidar_fp in lidar_dir.glob('*.sd.nc'):
+#     print(lidar_fp)
 
-    lidar = xr.open_dataset(lidar_fp)
+#     lidar = xr.open_dataset(lidar_fp)
     
-    if isinstance(lidar.attrs['lidar_times'] , str):
-        lidar.attrs['lidar_times'] = [lidar.attrs['lidar_times']]
-    sntl_x, sntl_y = snotel_locs[lidar_fp.stem]
+#     if isinstance(lidar.attrs['lidar_times'] , str):
+#         lidar.attrs['lidar_times'] = [lidar.attrs['lidar_times']]
+#     sntl_x, sntl_y = snotel_locs[lidar_fp.stem]
     
-    for t in lidar.attrs['lidar_times']:
-        t = pd.to_datetime(t)
+#     for t in lidar.attrs['lidar_times']:
+#         t = pd.to_datetime(t)
 
-        ds_orig = lidar.sel(time = slice(t - pd.Timedelta('180 days'), t))
-        ds_orig = ds_orig.sel(band = 'VV')
+#         ds_orig = lidar.sel(time = slice(t - pd.Timedelta('180 days'), t))
+#         ds_orig = ds_orig.sel(band = 'VV')
 
-        lidar_slope = slope(lidar['lidar-dem'].rio.reproject('EPSG:32611')).rio.reproject_match(lidar['lidar-sd'].sel(time = t))
+#         lidar_slope = slope(lidar['lidar-dem'].rio.reproject('EPSG:32611')).rio.reproject_match(lidar['lidar-sd'].sel(time = t))
 
-        delta = 5 # degrees
-        for high in tqdm(np.arange(delta, lidar_slope.max(), delta)):
-            low = high - delta
+#         delta = 5 # degrees
+#         for high in tqdm(np.arange(delta, lidar_slope.max(), delta)):
+#             low = high - delta
             
-            ds = ds_orig.copy(deep = True)
+#             ds = ds_orig.copy(deep = True)
 
-            lidar_sd = ds['lidar-sd'].sel(time = t).where((lidar_slope > low) & (lidar_slope < high))
+#             lidar_sd = ds['lidar-sd'].sel(time = t).where((lidar_slope > low) & (lidar_slope < high))
 
-            ds = ds.sel(time = ds.snotel_dSWE > 0)
+#             ds = ds.sel(time = ds.snotel_dSWE > 0)
             
-            sum = ds['232-sd_delta_int'].sum(dim = 'time')
+#             sum = ds['232-sd_delta_int'].sum(dim = 'time')
 
-            xs, ys = clean_xs_ys(lidar_sd.values.ravel(), sum.values.ravel(), clean_zeros = True)
+#             xs, ys = clean_xs_ys(lidar_sd.values.ravel(), sum.values.ravel(), clean_zeros = True)
 
-            if len(xs) == 0 or len(ys) == 0:
-                print(f"No values for {low}-{high}.")
-                rmse, r, n =  np.nan, np.nan, np.nan
-            else:
-                rmse, r, n = get_stats(xs, ys)
+#             if len(xs) == 0 or len(ys) == 0:
+#                 print(f"No values for {low}-{high}.")
+#                 rmse, r, n =  np.nan, np.nan, np.nan
+#             else:
+#                 rmse, r, n = get_stats(xs, ys)
             
-            loc = lidar_fp.name.replace('.sd.nc', '')
-            date = t.strftime('%Y-%m-%d')
+#             loc = lidar_fp.name.replace('.sd.nc', '')
+#             date = t.strftime('%Y-%m-%d')
 
-            for stat_name, stat in zip(['n', 'r', 'rmse'], [n, r, rmse]):
-                res.loc[(stat_name, loc, date), f'{low}-{high}'] = stat
+#             for stat_name, stat in zip(['n', 'r', 'rmse'], [n, r, rmse]):
+#                 res.loc[(stat_name, loc, date), f'{low}-{high}'] = stat
 
-res.to_csv('/Users/zachkeskinen/Documents/uavsar-validation/results/lidar-rs/slope.csv')
+# res.to_csv('/Users/zachkeskinen/Documents/uavsar-validation/results/lidar-rs/slope.csv')
 
-## Aspect
+# ## Aspect
 
-res = pd.DataFrame(index = pd.MultiIndex.from_arrays([[],[],[]], names=('stat', 'loc', 'date')))
+# res = pd.DataFrame(index = pd.MultiIndex.from_arrays([[],[],[]], names=('stat', 'loc', 'date')))
 
-for lidar_fp in lidar_dir.glob('*.sd.nc'):
-    print(lidar_fp)
+# for lidar_fp in lidar_dir.glob('*.sd.nc'):
+#     print(lidar_fp)
 
-    lidar = xr.open_dataset(lidar_fp)
+#     lidar = xr.open_dataset(lidar_fp)
     
-    if isinstance(lidar.attrs['lidar_times'] , str):
-        lidar.attrs['lidar_times'] = [lidar.attrs['lidar_times']]
-    sntl_x, sntl_y = snotel_locs[lidar_fp.stem]
+#     if isinstance(lidar.attrs['lidar_times'] , str):
+#         lidar.attrs['lidar_times'] = [lidar.attrs['lidar_times']]
+#     sntl_x, sntl_y = snotel_locs[lidar_fp.stem]
     
-    for t in lidar.attrs['lidar_times']:
-        t = pd.to_datetime(t)
+#     for t in lidar.attrs['lidar_times']:
+#         t = pd.to_datetime(t)
 
-        ds_orig = lidar.sel(time = slice(t - pd.Timedelta('180 days'), t))
-        ds_orig = ds_orig.sel(band = 'VV')
+#         ds_orig = lidar.sel(time = slice(t - pd.Timedelta('180 days'), t))
+#         ds_orig = ds_orig.sel(band = 'VV')
 
-        cond = aspect(lidar['lidar-dem'].rio.reproject('EPSG:32611')).rio.reproject_match(lidar['lidar-sd'].sel(time = t))
+#         cond = aspect(lidar['lidar-dem'].rio.reproject('EPSG:32611')).rio.reproject_match(lidar['lidar-sd'].sel(time = t))
 
-        delta = 5 # degrees
-        for high in tqdm(np.arange(delta, cond.max(), delta)):
-            low = high - delta
+#         delta = 5 # degrees
+#         for high in tqdm(np.arange(delta, cond.max(), delta)):
+#             low = high - delta
             
-            ds = ds_orig.copy(deep = True)
+#             ds = ds_orig.copy(deep = True)
 
-            lidar_sd = ds['lidar-sd'].sel(time = t).where((cond > low) & (cond < high))
+#             lidar_sd = ds['lidar-sd'].sel(time = t).where((cond > low) & (cond < high))
 
-            ds = ds.sel(time = ds.snotel_dSWE > 0)
+#             ds = ds.sel(time = ds.snotel_dSWE > 0)
             
-            sum = ds['232-sd_delta_int'].sum(dim = 'time')
+#             sum = ds['232-sd_delta_int'].sum(dim = 'time')
 
-            xs, ys = clean_xs_ys(lidar_sd.values.ravel(), sum.values.ravel(), clean_zeros = True)
+#             xs, ys = clean_xs_ys(lidar_sd.values.ravel(), sum.values.ravel(), clean_zeros = True)
 
-            if len(xs) == 0 or len(ys) == 0:
-                print(f"No values for {low}-{high}.")
-                rmse, r, n =  np.nan, np.nan, np.nan
-            else:
-                rmse, r, n = get_stats(xs, ys)
+#             if len(xs) == 0 or len(ys) == 0:
+#                 print(f"No values for {low}-{high}.")
+#                 rmse, r, n =  np.nan, np.nan, np.nan
+#             else:
+#                 rmse, r, n = get_stats(xs, ys)
             
-            loc = lidar_fp.name.replace('.sd.nc', '')
-            date = t.strftime('%Y-%m-%d')
+#             loc = lidar_fp.name.replace('.sd.nc', '')
+#             date = t.strftime('%Y-%m-%d')
 
-            for stat_name, stat in zip(['n', 'r', 'rmse'], [n, r, rmse]):
-                res.loc[(stat_name, loc, date), f'{low}-{high}'] = stat
+#             for stat_name, stat in zip(['n', 'r', 'rmse'], [n, r, rmse]):
+#                 res.loc[(stat_name, loc, date), f'{low}-{high}'] = stat
 
-res.to_csv('/Users/zachkeskinen/Documents/uavsar-validation/results/lidar-rs/aspect.csv')
+# res.to_csv('/Users/zachkeskinen/Documents/uavsar-validation/results/lidar-rs/aspect.csv')
 
-## Incidence Angle
+# ## Incidence Angle
 
-res = pd.DataFrame(index = pd.MultiIndex.from_arrays([[],[],[]], names=('stat', 'loc', 'date')))
+# res = pd.DataFrame(index = pd.MultiIndex.from_arrays([[],[],[]], names=('stat', 'loc', 'date')))
 
-for lidar_fp in lidar_dir.glob('*.sd.nc'):
-    print(lidar_fp)
+# for lidar_fp in lidar_dir.glob('*.sd.nc'):
+#     print(lidar_fp)
 
-    lidar = xr.open_dataset(lidar_fp)
+#     lidar = xr.open_dataset(lidar_fp)
     
-    if isinstance(lidar.attrs['lidar_times'] , str):
-        lidar.attrs['lidar_times'] = [lidar.attrs['lidar_times']]
-    sntl_x, sntl_y = snotel_locs[lidar_fp.stem]
+#     if isinstance(lidar.attrs['lidar_times'] , str):
+#         lidar.attrs['lidar_times'] = [lidar.attrs['lidar_times']]
+#     sntl_x, sntl_y = snotel_locs[lidar_fp.stem]
     
-    for t in lidar.attrs['lidar_times']:
-        t = pd.to_datetime(t)
+#     for t in lidar.attrs['lidar_times']:
+#         t = pd.to_datetime(t)
 
-        ds_orig = lidar.sel(time = slice(t - pd.Timedelta('180 days'), t))
-        ds_orig = ds_orig.sel(band = 'VV')
+#         ds_orig = lidar.sel(time = slice(t - pd.Timedelta('180 days'), t))
+#         ds_orig = ds_orig.sel(band = 'VV')
 
-        cond = np.rad2deg(lidar['232-inc'].isel(time = 0))
+#         cond = np.rad2deg(lidar['232-inc'].isel(time = 0))
 
-        delta = 5 # degrees
-        for high in tqdm(np.arange(delta, cond.max(), delta)):
-            low = high - delta
+#         delta = 5 # degrees
+#         for high in tqdm(np.arange(delta, cond.max(), delta)):
+#             low = high - delta
             
-            ds = ds_orig.copy(deep = True)
+#             ds = ds_orig.copy(deep = True)
 
-            lidar_sd = ds['lidar-sd'].sel(time = t).where((cond > low) & (cond < high))
+#             lidar_sd = ds['lidar-sd'].sel(time = t).where((cond > low) & (cond < high))
 
-            ds = ds.sel(time = ds.snotel_dSWE > 0)
+#             ds = ds.sel(time = ds.snotel_dSWE > 0)
             
-            sum = ds['232-sd_delta_int'].sum(dim = 'time')
+#             sum = ds['232-sd_delta_int'].sum(dim = 'time')
 
-            xs, ys = clean_xs_ys(lidar_sd.values.ravel(), sum.values.ravel(), clean_zeros = True)
+#             xs, ys = clean_xs_ys(lidar_sd.values.ravel(), sum.values.ravel(), clean_zeros = True)
 
-            if len(xs) == 0 or len(ys) == 0:
-                print(f"No values for {low}-{high}.")
-                rmse, r, n =  np.nan, np.nan, np.nan
-            else:
-                rmse, r, n = get_stats(xs, ys)
+#             if len(xs) == 0 or len(ys) == 0:
+#                 print(f"No values for {low}-{high}.")
+#                 rmse, r, n =  np.nan, np.nan, np.nan
+#             else:
+#                 rmse, r, n = get_stats(xs, ys)
             
-            loc = lidar_fp.name.replace('.sd.nc', '')
-            date = t.strftime('%Y-%m-%d')
+#             loc = lidar_fp.name.replace('.sd.nc', '')
+#             date = t.strftime('%Y-%m-%d')
 
-            for stat_name, stat in zip(['n', 'r', 'rmse'], [n, r, rmse]):
-                res.loc[(stat_name, loc, date), f'{low}-{high}'] = stat
+#             for stat_name, stat in zip(['n', 'r', 'rmse'], [n, r, rmse]):
+#                 res.loc[(stat_name, loc, date), f'{low}-{high}'] = stat
 
-res.to_csv('/Users/zachkeskinen/Documents/uavsar-validation/results/lidar-rs/inc.csv')
+# res.to_csv('/Users/zachkeskinen/Documents/uavsar-validation/results/lidar-rs/inc.csv')
 
 # tree height
 
-res = pd.DataFrame(index = pd.MultiIndex.from_arrays([[],[],[]], names=('stat', 'loc', 'date')))
+# res = pd.DataFrame(index = pd.MultiIndex.from_arrays([[],[],[]], names=('stat', 'loc', 'date')))
 
-for lidar_fp in lidar_dir.glob('*.sd.nc'):
-    print(lidar_fp)
+# for lidar_fp in lidar_dir.glob('*.sd.nc'):
+#     print(lidar_fp)
 
-    lidar = xr.open_dataset(lidar_fp)
+#     lidar = xr.open_dataset(lidar_fp)
     
-    if isinstance(lidar.attrs['lidar_times'] , str):
-        lidar.attrs['lidar_times'] = [lidar.attrs['lidar_times']]
-    sntl_x, sntl_y = snotel_locs[lidar_fp.stem]
+#     if isinstance(lidar.attrs['lidar_times'] , str):
+#         lidar.attrs['lidar_times'] = [lidar.attrs['lidar_times']]
+#     sntl_x, sntl_y = snotel_locs[lidar_fp.stem]
     
-    for t in lidar.attrs['lidar_times']:
-        t = pd.to_datetime(t)
+#     for t in lidar.attrs['lidar_times']:
+        
+#         t = pd.to_datetime(t)
 
-        ds_orig = lidar.sel(time = slice(t - pd.Timedelta('180 days'), t))
-        ds_orig = ds_orig.sel(band = 'VV')
+#         ds_orig = lidar.sel(time = slice(t - pd.Timedelta('180 days'), t))
+#         ds_orig = ds_orig.sel(band = 'VV')
 
-        cond = lidar['lidar-vh'].sel(time = t)
+#         cond = lidar['lidar-vh'].sel(time = t)
 
-        delta = 5 # meters
-        for high in tqdm(np.arange(delta, cond.max(), delta)):
-            low = high - delta
+#         delta = 5 # meters
+#         for high in tqdm(np.arange(delta, cond.max(), delta)):
+#             res = res.sort_index()
+#             low = high - delta
             
-            ds = ds_orig.copy(deep = True)
+#             ds = ds_orig.copy(deep = True)
 
-            lidar_sd = ds['lidar-sd'].sel(time = t).where((cond > low) & (cond < high))
+#             lidar_sd = ds['lidar-sd'].sel(time = t).where((cond > low) & (cond < high))
 
-            ds = ds.sel(time = ds.snotel_dSWE > 0)
+#             ds = ds.sel(time = ds.snotel_dSWE > 0)
             
-            sum = ds['232-sd_delta_int'].sum(dim = 'time')
+#             sum = ds['232-sd_delta_int'].sum(dim = 'time')
 
-            xs, ys = clean_xs_ys(lidar_sd.values.ravel(), sum.values.ravel(), clean_zeros = True)
+#             xs, ys = clean_xs_ys(lidar_sd.values.ravel(), sum.values.ravel(), clean_zeros = True)
 
-            if len(xs) == 0 or len(ys) == 0:
-                print(f"No values for {low}-{high}.")
-                rmse, r, n =  np.nan, np.nan, np.nan
-            else:
-                rmse, r, n = get_stats(xs, ys)
+#             if len(xs) < 2 or len(ys) < 2:
+#                 print(f"No values for {low}-{high}.")
+#                 rmse, r, n =  np.nan, np.nan, np.nan
+#             else:
+#                 rmse, r, n = get_stats(xs, ys)
             
-            loc = lidar_fp.name.replace('.sd.nc', '')
-            date = t.strftime('%Y-%m-%d')
+#             loc = lidar_fp.name.replace('.sd.nc', '')
+#             date = t.strftime('%Y-%m-%d')
 
-            for stat_name, stat in zip(['n', 'r', 'rmse'], [n, r, rmse]):
-                res.loc[(stat_name, loc, date), f'{low}-{high}'] = stat
+#             for stat_name, stat in zip(['n', 'r', 'rmse'], [n, r, rmse]):
+#                 res.loc[(stat_name, loc, date), f'{low}-{high}'] = stat
 
-res.to_csv('/Users/zachkeskinen/Documents/uavsar-validation/results/lidar-rs/tree_height.csv')
+# res.to_csv('/Users/zachkeskinen/Documents/uavsar-validation/results/lidar-rs/tree_height.csv')
 
 # tree density
 
@@ -240,6 +242,7 @@ for lidar_fp in lidar_dir.glob('*.sd.nc'):
 
         delta = 0.1 # percentage (10 % )
         for high in tqdm(np.arange(delta, tree_density.max(), delta)):
+            res = res.sort_index()
             low = high - delta
             
             ds = ds_orig.copy(deep = True)
