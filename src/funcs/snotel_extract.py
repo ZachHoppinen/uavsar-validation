@@ -1,6 +1,6 @@
 from datetime import datetime
 from metloom.pointdata import SnotelPointData
-from conversion import imperial_to_metric
+from conversions import imperial_to_metric
 
 def get_snotel_data(name, site_id, dates):
     snotel_point = SnotelPointData(site_id, name)
