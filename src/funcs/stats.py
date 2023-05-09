@@ -34,6 +34,11 @@ def clean_xs_ys(xs, ys, clean_zeros = False):
 
     return xs, ys
 
+def two_arr_clean(arr1, arr2):
+    idx = np.logical_not(np.logical_or(np.isnan(arr1), np.isnan(arr2)))     
+    arr1, arr2 = arr1[idx], arr2[idx]
+    return arr1, arr2
+
 def get_r(ds, lidar):
     xs = lidar.values.ravel()
     ys = ds.values.ravel()

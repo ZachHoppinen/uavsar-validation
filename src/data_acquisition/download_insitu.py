@@ -179,4 +179,7 @@ for (year, site), df in combo.groupby(['obs_year', 'site']):
 combo = pd.concat(add_t1_dfs)
 combo = combo.dropna(subset = ['date_t1'], axis = 0)
 combo['hn_a'] = combo['hn_a'].astype(float)
-combo.parquet('/bsuhome/zacharykeskinen/uavsar-validation/data/insitu/storm_boards.parq')
+from georeferencing import pd_add_elevation
+pd_add_elevation(combo, 'latitude', 'longitude')
+combo['elev_meters'] = combo['elev_meters'].astype(float)
+combo.to_parquet('/bsuhome/zacharykeskinen/uavsar-validation/data/insitu/storm_boards.parq')

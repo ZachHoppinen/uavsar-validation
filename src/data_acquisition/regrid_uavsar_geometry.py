@@ -10,34 +10,26 @@ from scipy.interpolate import griddata
 geometry_dir = Path('/bsuhome/zacharykeskinen/scratch/data/uavsar/uavsar_geometry/')
 
 DAs = []
+
 for heading in ['05208_01_BU', '23205_01_BC']:
     print(heading)
-    lats = []
-    longs = []
-    full_x = []
-    full_y = []
-    full_z = []
+
     for swath in [1,2,3]:
+
         lkv = np.fromfile(geometry_dir.joinpath(f'lowman_{heading}_s{swath}_2x8.lkv'), dtype = np.dtype('<f'))
-        x, y, z = lkv[::3], lkv[1::3], lkv[2::3]
-        mag = (x**2 + y**2 + z**2)**0.5
+        llh = np.fromfile(geometry_dir.joinpath(f'lowman_{heading}_s{swath}_2x8.llh'), dtype = np.dtype('<f')) 
 
-        llh = np.fromfile(geometry_dir.joinpath(f'lowman_{heading}_s{swath}_2x8.llh'), dtype = np.dtype('<f'))
-        lat, lon, height = llh[::3], llh[1::3], llh[2::3]
+        if swath == 1:
+            x, y, z = lkv[::3], lkv[1::3], lkv[2::3]
+            lat, lon, height = llh[::3], llh[1::3], llh[2::3]
+        else:
+            x, y, z = np.concatenate([x, lkv[::3]]), np.concatenate([y, lkv[1::3]]), np.concatenate([z, lkv[2::3]])
+            lat, lon, height = np.concatenate([lat, llh[::3]]), np.concatenate([lon, llh[1::3]]), np.concatenate([height, llh[2::3]])
 
-        n = 1
-        lat, lon, height = lat[::n], lon[::n], height[::n]
-        x, y, z = x[::n], y[::n], z[::n]
-    
-        lats.extend(lat)
-        longs.extend(lon)
-        full_x.extend(x)
-        full_y.extend(y)
-        full_z.extend(z)
+    # use for faster processing
+    # n = 100000
+    # x, y, z, lat, lon, height = x[::n], y[::n], z[::n], lat[::n], lon[::n], height[::n]
 
-
-    lon = np.array(longs)
-    lat = np.array(lats)
     # regrid to regular grid
     xs =  np.linspace(lon.min(), lon.max(), int(lon.shape[0]**0.5))
     ys = np.linspace(lat.min(), lat.max(), int(lat.shape[0]**0.5))
@@ -45,7 +37,8 @@ for heading in ['05208_01_BU', '23205_01_BC']:
 
     points = (lon, lat)
 
-    for var_name, arr in zip(['lkv_x','lkv_y','lkv_z'], [full_x, full_y, full_z]):
+    print('regridding')
+    for var_name, arr in zip(['lkv_x','lkv_y','lkv_z', 'dem'], [x, y, z, height]):
         data = griddata(points, arr, (xg, yg), method = 'cubic', fill_value = np.nan)
 
         # add to list of dataarrays
@@ -63,4 +56,4 @@ for i, da in enumerate(DAs):
 ds = xr.merge(DAs)
 
 # save output
-ds.to_netcdf('/bsuhome/zacharykeskinen/scratch/data/uavsar/ncs/geometry/uavsar_geom.nc')
+ds.to_netcdf('/bsuhome/zacharykeskinen/scratch/data/uavsar/ncs/geometry/uavsar_geom_v3.nc')
