@@ -1,0 +1,26 @@
+name: validation
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - pip
+  - jupyter
+  - ipykernel
+  - numpy
+  - pandas
+  - geopandas
+  - xarray
+  - rioxarray
+  - shapely
+  - scipy
+  - scikit-image
+  - matplotlib
+  - seaborn
+  - tqdm
+  - pyarrow
+  - bottleneck
+  - cftime
+  - pip:
+    - metloom
+    - uavsar_pytools
+    - phase_o_matic
