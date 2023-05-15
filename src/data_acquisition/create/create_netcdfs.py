@@ -10,10 +10,9 @@ data_dir = Path('/bsuhome/zacharykeskinen/scratch/data/uavsar')
 ncs_dir = data_dir.joinpath('ncs')
 tif_dir = data_dir.joinpath('tifs', 'Lowman, CO')
 
-dems = []
-ints = []
-cohs = []
-unws = []
+ints = [None] * len(list(tif_dir.glob('lowman_232*_grd')))
+cohs = [None] * len(list(tif_dir.glob('lowman_232*_grd')))
+unws = [None] * len(list(tif_dir.glob('lowman_232*_grd')))
 for i, pair_dir in enumerate(tif_dir.glob('lowman_232*_grd')):
 
     print(pair_dir.stem)
@@ -47,8 +46,8 @@ for i, pair_dir in enumerate(tif_dir.glob('lowman_232*_grd')):
     # dems.append(dem.interp_like(ref).expand_dims(time = [pd.to_datetime(ann.loc['value', 'start time of acquisition for pass 1'])]))
     
     # add wrapped and coherence to lists
-    ints.append(int.interp_like(ref))
-    cohs.append(coh.interp_like(ref))
+    ints[i] = int.interp_like(ref)
+    cohs[i] = coh.interp_like(ref)
 
     if len(list(pair_dir.glob('*VV_*unw.grd.tiff'))) == 1:
         # if we have unwrapped phase
@@ -63,13 +62,13 @@ for i, pair_dir in enumerate(tif_dir.glob('lowman_232*_grd')):
         unw = unw.assign_coords(time2 = ('time', [pd.to_datetime(ann.loc['value', 'start time of acquisition for pass 2'])]))
 
         # add to list
-        unws.append(unw.interp_like(ref))
+        unws[i] = unw.interp_like(ref)
 
 # make dataset and add variables
 ds = xr.Dataset()
-ds['unw'] = xr.concat(unws, dim = 'time')
-ds['int'] = xr.concat(ints, dim = 'time')
-ds['cor'] = xr.concat(cohs, dim = 'time')
+ds['unw'] = xr.concat([i for i in unws if i is not None], dim = 'time', combine_attrs = 'drop_conflicts')
+ds['int'] = xr.concat([i for i in ints if i is not None], dim = 'time', combine_attrs = 'drop_conflicts')
+ds['cor'] = xr.concat([i for i in cohs if i is not None], dim = 'time', combine_attrs = 'drop_conflicts')
 ds['dem'] = ref
 
 # fix time from nanoseconds to pd datetime
