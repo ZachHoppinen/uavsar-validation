@@ -140,75 +140,172 @@ geom_dir = ncs_dir.joinpath('geometry')
 
 ## get tree data
 
-tree_dir = data_dir.joinpath('trees')
-nlcd = tree_dir.joinpath('nlcd')
-biomass = tree_dir.joinpath('biomass')
+# tree_dir = data_dir.joinpath('trees')
+# nlcd = tree_dir.joinpath('nlcd')
+# biomass = tree_dir.joinpath('biomass')
 
-ds = xr.open_dataset(ncs_dir.joinpath('tmp_uv_geom_atm.nc'))
+# ds = xr.open_dataset(ncs_dir.joinpath('tmp_uv_geom_atm.nc'))
 
-# get tree height
-print('tree height')
-tree_height = xr.open_dataarray(tree_dir.joinpath('Forest_height_2019_NAM.tif')).rio.clip_box(*ds.rio.bounds()).squeeze('band', drop = True)
-# get old max for masking out interpolated edges
-height_max = tree_height.max() + 100
-# interpolate to match our dataset
-tree_height = tree_height.interp_like(ds['dem'])
-# mask out outliers from interpolation
-tree_height = tree_height.where((tree_height >= 0) & (tree_height <= height_max))
-# add to dataset
-ds['tree_height'] =  tree_height.drop('spatial_ref')
+# # get tree height
+# print('tree height')
+# tree_height = xr.open_dataarray(tree_dir.joinpath('Forest_height_2019_NAM.tif')).rio.clip_box(*ds.rio.bounds()).squeeze('band', drop = True)
+# # get old max for masking out interpolated edges
+# height_max = tree_height.max() + 100
+# # interpolate to match our dataset
+# tree_height = tree_height.interp_like(ds['dem'])
+# # mask out outliers from interpolation
+# tree_height = tree_height.where((tree_height >= 0) & (tree_height <= height_max))
+# # add to dataset
+# ds['tree_height'] =  tree_height.drop('spatial_ref')
 
-# get tree percentage 
-print('tree percentage')
+# # get tree percentage 
+# print('tree percentage')
 
-tree_perc = xr.open_dataarray(nlcd.joinpath('nlcd_2016_treecanopy_2019_08_31.img')).squeeze('band', drop =  True)
+# tree_perc = xr.open_dataarray(nlcd.joinpath('nlcd_2016_treecanopy_2019_08_31.img')).squeeze('band', drop =  True)
 
-# find bounds in this datasets crs to clip it before reprojecting
-# https://pyproj4.github.io/pyproj/stable/api/transformer.html
-transformer = Transformer.from_crs("epsg:4326","epsg:5070", always_xy = True)
+# # find bounds in this datasets crs to clip it before reprojecting
+# # https://pyproj4.github.io/pyproj/stable/api/transformer.html
+# transformer = Transformer.from_crs("epsg:4326","epsg:5070", always_xy = True)
 
-bds = list(transformer.transform(*ds.rio.bounds()[:2]))
-bds.extend(list(transformer.transform(*ds.rio.bounds()[2:])))
-# clip big raster to our area
-tree_perc = tree_perc.rio.clip_box(*bds)
-# add our crs to reproject
-ds = ds.rio.write_crs('epsg:4326')
-# reproject and mask out areas where the interpolation led to artifacts
-tree_perc = tree_perc.rio.reproject_match(ds['dem'])
-tree_perc = tree_perc.where((tree_perc >= 0) & (tree_perc < 100)) # percentage bounds 0-100
-# add to dataset
-ds['tree_perc'] = tree_perc
+# bds = list(transformer.transform(*ds.rio.bounds()[:2]))
+# bds.extend(list(transformer.transform(*ds.rio.bounds()[2:])))
+# # clip big raster to our area
+# tree_perc = tree_perc.rio.clip_box(*bds)
+# # add our crs to reproject
+# ds = ds.rio.write_crs('epsg:4326')
+# # reproject and mask out areas where the interpolation led to artifacts
+# tree_perc = tree_perc.rio.reproject_match(ds['dem'])
+# tree_perc = tree_perc.where((tree_perc >= 0) & (tree_perc < 100)) # percentage bounds 0-100
+# # add to dataset
+# ds['tree_perc'] = tree_perc
 
-# get vegetation biomass
-print('tree biomass')
+# # get vegetation biomass
+# print('tree biomass')
 
-bm = xr.open_dataarray(biomass.joinpath('conus_forest_biomass_mg_per_ha.img')).squeeze('band', drop = True)
-# get old max for masking
-bm_max = bm.max() + 1000
-# clip big raster to our study area
-transformer = Transformer.from_crs("epsg:4326","epsg:5069", always_xy = True)
-bds = list(transformer.transform(*ds.rio.bounds()[:2]))
-bds.extend(list(transformer.transform(*ds.rio.bounds()[2:])))
-bm = bm.rio.clip_box(*bds)
-# reproject to our crs and mask out artificats
-bm = bm.rio.reproject_match(ds['dem'])
-bm = bm.where((bm < bm_max) & (bm >= 0))
-# add to dataset
-ds['tree_biomass'] = bm
+# bm = xr.open_dataarray(biomass.joinpath('conus_forest_biomass_mg_per_ha.img')).squeeze('band', drop = True)
+# # get old max for masking
+# bm_max = bm.max() + 1000
+# # clip big raster to our study area
+# transformer = Transformer.from_crs("epsg:4326","epsg:5069", always_xy = True)
+# bds = list(transformer.transform(*ds.rio.bounds()[:2]))
+# bds.extend(list(transformer.transform(*ds.rio.bounds()[2:])))
+# bm = bm.rio.clip_box(*bds)
+# # reproject to our crs and mask out artificats
+# bm = bm.rio.reproject_match(ds['dem'])
+# bm = bm.where((bm < bm_max) & (bm >= 0))
+# # add to dataset
+# ds['tree_biomass'] = bm
 
-## add attributes
-ds['tree_biomass'].attrs['long_name'] = '2008 USDS Biomass'
-ds['tree_biomass'].attrs['units'] = 'megagrams / hectare'
-ds['tree_biomass'].attrs['data_url'] = 'https://data.fs.usda.gov/geodata/rastergateway/biomass/conus_forest_biomass.php'
+# ## add attributes
+# ds['tree_biomass'].attrs['long_name'] = '2008 USDS Biomass'
+# ds['tree_biomass'].attrs['units'] = 'megagrams / hectare'
+# ds['tree_biomass'].attrs['data_url'] = 'https://data.fs.usda.gov/geodata/rastergateway/biomass/conus_forest_biomass.php'
 
-ds['tree_height'].attrs['long_name'] = '2019 GLAD tree height'
-ds['tree_height'].attrs['units'] = 'meters'
-ds['tree_height'].attrs['data_url'] = 'https://glad.umd.edu/dataset/gedi'
+# ds['tree_height'].attrs['long_name'] = '2019 GLAD tree height'
+# ds['tree_height'].attrs['units'] = 'meters'
+# ds['tree_height'].attrs['data_url'] = 'https://glad.umd.edu/dataset/gedi'
 
-ds['tree_perc'].attrs['long_name'] = '2016 NLCD Tree Percentage'
-ds['tree_perc'].attrs['units'] = 'Percent'
-ds['tree_perc'].attrs['data_url'] = 'https://www.mrlc.gov/data/nlcd-2016-usfs-tree-canopy-cover-conus'
+# ds['tree_perc'].attrs['long_name'] = '2016 NLCD Tree Percentage'
+# ds['tree_perc'].attrs['units'] = 'Percent'
+# ds['tree_perc'].attrs['data_url'] = 'https://www.mrlc.gov/data/nlcd-2016-usfs-tree-canopy-cover-conus'
 
-# save temporary file
+# # save temporary file
+# # remove attribute grid_mapping that appears somehow
+# del ds['dem'].attrs['grid_mapping']
 
-ds.to_netcdf(ncs_dir.joinpath('tmp_uv_geom_atm_veg.nc'))
+# ds.to_netcdf(ncs_dir.joinpath('tmp_uv_geom_atm_veg.nc'))
+
+# ## get model data
+model_dir = ncs_dir.joinpath('model')
+
+# first we need to fix up our time data
+# we need a time for model time slices, time1 for uavsar flight 1s and a coordinate not dim time2 of the second flight
+# ds = xr.open_dataset(ncs_dir.joinpath('tmp_uv_geom_atm_veg.nc'))
+# round first to make sure we don't have any second mismatches
+# t2 = ds.time2.dt.round('min').data
+# # drop time2 as an index should just be a coordinate and reliant on time1
+# ds = ds.drop_indexes('time2')
+# # swap time name to time1
+# ds = ds.swap_dims({'time':'time1'})
+# # round data
+# ds['time1'] = ds.time.dt.round('min').data
+# # drop the time dimension now it is names time1
+# ds = ds.drop('time')
+# # drop index on time2 that reappears when we drop time
+# ds = ds.drop_indexes('time2')
+# # open model dataset
+# model = xr.open_dataset(model_dir.joinpath('model.re.nc'))
+
+# # now we calculate time dimension which should be all time steps in time1 and time2 with no duplicates
+# times = np.unique(np.concatenate([ds.time1, ds.time2]))
+# # add this new time dimension in
+# ds['time'] = times
+
+# # calculate the new shape of our data
+# old_shape = list(ds['int_phase'].shape)
+# old_shape[0] = len(ds['time'])
+
+# # make datarrays with time slices for each time1 and time2 iwth no duplicates
+# model_swe = xr.DataArray(np.zeros(old_shape),
+#              coords = [times, ds.y.data, ds.x.data],
+#              dims = ['time','y','x']
+# )
+# model_melt = model_swe.copy()
+
+# # these are a function of time1 so we can just copy our existing data variable
+# model_d_swe = xr.zeros_like(ds['int_phase'])
+# cum_melt = xr.zeros_like(ds['int_phase'])
+
+# # now cycle through each uavsar flight pair
+# for t1, t2 in zip(ds.time1.data, ds.time2.data):
+#     print([t1, t2])
+#     t1, t2 = pd.to_datetime(t1), pd.to_datetime(t2)
+#     # get relevant time slice of the model
+#     m1 = model.sel(time = t1, method = 'nearest').interp_like(ds['dem'])
+#     m2 = model.sel(time = t2, method = 'nearest').interp_like(ds['dem'])
+
+#     # this is the difference in swe and melt
+#     diff = m2 - m1
+#     # get SWE and Melt at t1 and t2 and save to "time" dimension
+#     model_swe.loc[dict(time = t1)] = m1['swe']
+#     model_swe.loc[dict(time = t2)] = m2['swe']
+
+#     model_melt.loc[dict(time = t1)] = m1['melt']
+#     model_melt.loc[dict(time = t2)] = m2['melt']
+
+#     # get change in SWE and save to "time1" dimension
+#     model_d_swe.loc[dict(time1 = t1)] = m2['swe'] - m1['swe']
+
+#     # get cumulative melt and save to "time1" dimension
+#     cum_melt.loc[dict(time1 = t1)] = model.sel(time = slice(t1, t2))['melt'].sum(dim = ['time']).interp_like(ds['dem'])
+
+# # now when we add these as data variables they will know to set either time1 or time
+# # based on what dimension are in the dataarray
+# ds['model_swe'] = model_swe
+# ds['model_melt'] = model_melt
+# ds['cum_melt'] = cum_melt
+# ds['model_d_swe'] = model_d_swe
+
+# # add attrs
+# ds['model_swe'].attrs['long_name'] = 'SNOWMODEL SWE'
+# ds['model_melt'].attrs['long_name'] = 'SNOWMODEL Melt'
+# ds['cum_melt'].attrs['long_name'] = 'SNOWMODEL Cumulative Melt'
+# ds['model_d_swe'].attrs['long_name'] = 'SNOWMODEL Change in SWE'
+
+# for var in ['model_d_swe', 'cum_melt', 'model_swe', 'model_melt']:
+#     ds[var].attrs['units'] = 'meters'
+
+# fix time2 to be a coordinate not an index one more time
+t2 = ds['time2']
+ds = ds.drop('time2')
+ds = ds.assign_coords(time2 = ('time1', t2.data))
+
+# mask out some extreme outliers in delay
+ds['delay'] = ds.delay.where((ds.delay > ds.delay.quantile(0.01)) & (ds.delay < ds.delay.quantile(0.99)))
+
+# finally sort by time
+ds = ds.sortby('time1')
+ds = ds.sortby('time')
+
+# save dataset
+ds.to_netcdf(ncs_dir.joinpath('final_uv_geom_atm_veg_model_v1.nc'))
