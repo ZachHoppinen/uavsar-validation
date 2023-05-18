@@ -20,6 +20,8 @@ dependencies:
   - pyarrow
   - bottleneck
   - cftime
+  - dask 
+  - netCDF4
   - pip:
     - metloom
     - uavsar_pytools

@@ -4,8 +4,9 @@
 #SBATCH -n 1 # total number of tasks requested
 #SBATCH -N 1 # number of nodes you want to run on
 #SBATCH -p bigmem # queue (partition)
-#SBATCH -t 18:00:00 # run time (hh:mm:ss) - 1 minute in this example.
-#SBATCH --mail-user=zachkeskinen@gmail.com
+#SBATCH -t 8:00:00 # run time (hh:mm:ss) - 1 minute in this example.
+#SBATCH --mail-user=zacharykeskinen@boisestate.edu
+#SBATCH --mail-type=END
 
 echo "Starting."
 
