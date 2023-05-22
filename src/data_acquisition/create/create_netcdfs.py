@@ -7,6 +7,8 @@ import rioxarray as rxa
 import matplotlib.pyplot as plt
 from pyproj import Transformer
 
+from uavsar_pytools.snow_depth_inversion import phase_from_depth, depth_from_phase
+
 xr.set_options(keep_attrs = True)
 
 data_dir = Path('/bsuhome/zacharykeskinen/scratch/data/uavsar')
@@ -296,16 +298,49 @@ model_dir = ncs_dir.joinpath('model')
 #     ds[var].attrs['units'] = 'meters'
 
 # fix time2 to be a coordinate not an index one more time
-t2 = ds['time2']
-ds = ds.drop('time2')
-ds = ds.assign_coords(time2 = ('time1', t2.data))
+# t2 = ds['time2']
+# ds = ds.drop('time2')
+# ds = ds.assign_coords(time2 = ('time1', t2.data))
 
-# mask out some extreme outliers in delay
-ds['delay'] = ds.delay.where((ds.delay > ds.delay.quantile(0.01)) & (ds.delay < ds.delay.quantile(0.99)))
+# # mask out some extreme outliers in delay
+# ds['delay'] = ds.delay.where((ds.delay > ds.delay.quantile(0.01)) & (ds.delay < ds.delay.quantile(0.99)))
 
-# finally sort by time
-ds = ds.sortby('time1')
-ds = ds.sortby('time')
+# # finally sort by time
+# ds = ds.sortby('time1')
+# ds = ds.sortby('time')
 
-# save dataset
-ds.to_netcdf(ncs_dir.joinpath('final_uv_geom_atm_veg_model_v1.nc'))
+# # save dataset
+# ds.to_netcdf(ncs_dir.joinpath('final_uv_geom_atm_veg_model_v1.nc'))
+
+# # now correct by insitu data
+# ds = xr.open_dataset(ncs_dir.joinpath('final_uv_geom_atm_veg_model_v1.nc'))
+# ds['delay'] = ds.delay.where((ds.delay > ds.delay.quantile(0.01)) & (ds.delay < ds.delay.quantile(0.99)))
+# ds = ds.sortby('time1')
+# ds = ds.sortby('time')
+
+# data_dir = Path('/bsuhome/zacharykeskinen/uavsar-validation/data')
+# insitu_dir = data_dir.joinpath('insitu')
+# insitu = pd.read_parquet(insitu_dir.joinpath('all_difference.parq'))
+# insitu = insitu[insitu.site_name != 'jackson']
+# insitu = gpd.GeoDataFrame(insitu, geometry=gpd.points_from_xy(insitu.lon, insitu.lat), crs="EPSG:4326")
+
+# ds['unw_atm'] = ds['unw'] - ds['delay']
+# ds['int_atm'] = ds['int_phase'] - ds['delay']
+
+# inc_mean = ds['inc'].mean()
+# for t1 in insitu.time1.unique():
+#     insitu_time = insitu[insitu.time1 == t1]
+#     insitu_dSD = insitu_time['dSD'].mean()
+#     insitu_density = pd.concat([insitu_time['t1_density'], insitu_time['t2_density']]).mean()
+#     expected_phase = phase_from_depth(insitu_dSD, inc_angle = inc_mean, density = insitu_density)
+
+#     t2 = insitu_time.iloc[0]['time2']
+#     snow_on = (ds['model_swe'].sel(time = t1) > 0.1) & (ds['model_swe'].sel(time = t2) > 0.1)
+
+#     for k in ['unw', 'int_phase','unw_atm','int_atm']:
+        
+#         cur_phase = ds[k].sel(time1 = t1).where(snow_on).mean()
+#         ds[k].loc[{'time1':t1}] = ds[k].sel(time1 = t1) - (cur_phase - expected_phase)
+
+# ds.to_netcdf(ncs_dir.joinpath('final_insitu.nc'))
+
