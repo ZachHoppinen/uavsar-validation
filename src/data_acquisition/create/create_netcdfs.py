@@ -344,3 +344,12 @@ model_dir = ncs_dir.joinpath('model')
 
 # ds.to_netcdf(ncs_dir.joinpath('final_insitu.nc'))
 
+ds = xr.open_dataset(ncs_dir.joinpath('final_insitu.nc'))# .isel(x = slice(0, -1, 100), y = slice(0, -1, 100))
+
+ds = ds.chunk()
+
+ds_10 = ds.rolling(x = 10, y = 10).reduce(np.nanmean)
+ds_10.to_netcdf(ncs_dir.joinpath('final_10_10.nc'))
+
+ds_50 = ds.rolling(x = 50, y = 50).reduce(np.nanmean)
+ds_50.to_netcdf(ncs_dir.joinpath('final_50_50.nc'))

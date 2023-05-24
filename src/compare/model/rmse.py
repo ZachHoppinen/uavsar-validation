@@ -21,7 +21,11 @@ fig_dir = Path('/bsuhome/zacharykeskinen/uavsar-validation/figures/model')
 
 ds = xr.open_dataset(ncs_dir.joinpath('final_insitu.nc'))# .isel(x = slice(0, -1, 100), y = slice(0, -1, 100))
 
-ds = ds.rolling(x = 10, y = 10).mean()
+ds_10 = ds.rolling(x = 10, y = 10).mean()
+ds_10.to_netcdf(ncs_dir.joinpath('final_10_10.nc'))
+
+ds_50 = ds.rolling(x = 50, y = 50).mean()
+ds_50.to_netcdf(ncs_dir.joinpath('final_50_50.nc'))
 
 sub = ds[['dem', 'int_phase','int_atm','unw_atm', 'model_d_swe','model_swe','cor', 'tree_perc', 'inc']]
 sub = sub.where((sub['model_swe'].min(dim = 'time') > 0) & (~sub['cor'].mean(dim = 'time1').isnull()))
