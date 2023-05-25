@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 
 def get_stats(xs, ys, clean = True, bias = False):
+    """
+    returns rmse, r, len(x)
+    """
 
     if clean:
         xs, ys = clean_xs_ys(xs, ys)

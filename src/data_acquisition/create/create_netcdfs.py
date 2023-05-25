@@ -20,9 +20,6 @@ ncs_dir = data_dir.joinpath('ncs')
 # unws = [None] * len(list(tif_dir.glob('lowman_232*_grd')))
 # for i, pair_dir in enumerate(tif_dir.glob('lowman_232*_grd')):
 
-#     if i > 1:
-#         break
-
 #     print(pair_dir.stem)
 
 #     # get files
@@ -348,8 +345,8 @@ ds = xr.open_dataset(ncs_dir.joinpath('final_insitu.nc'))# .isel(x = slice(0, -1
 
 ds = ds.chunk()
 
-ds_10 = ds.rolling(x = 10, y = 10).reduce(np.nanmean)
+ds_10 = ds.coarsen(x = 10, y = 10, boundary = 'trim').mean()
 ds_10.to_netcdf(ncs_dir.joinpath('final_10_10.nc'))
 
-ds_50 = ds.rolling(x = 50, y = 50).reduce(np.nanmean)
+ds_50 = ds.coarsen(x = 50, y = 50, boundary = 'trim').mean()
 ds_50.to_netcdf(ncs_dir.joinpath('final_50_50.nc'))
