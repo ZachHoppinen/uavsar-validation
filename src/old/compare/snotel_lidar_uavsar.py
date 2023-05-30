@@ -29,7 +29,7 @@ for i, date in enumerate(['2019-12-20', '2020-01-30','2020-02-13','2020-02-21'])
         axes[0].axvline(date, color = 'purple', label = 'UAVSAR acquistion')
     else:
         axes[0].axvline(date, color = 'purple')
-axes[0].axvline('2020-02-09', label = 'LiDAR Flight', color = 'red', linestyle = 'dashed')
+# axes[0].axvline('2020-02-09', label = 'LiDAR Flight', color = 'red', linestyle = 'dashed')
 axes[0].set_title('2019-2020', fontweight = 'bold')
 axes[0].legend()
 # 2020-2021
@@ -45,7 +45,7 @@ for i, date in enumerate(['2021-01-15', '2021-01-20','2021-01-27','2021-02-03','
         axes[1].axvline(date, color = 'purple')
 
 # plt.axvline('2021-01-15', label = 'Start of UAVSAR', color = 'red')
-axes[1].axvline('2021-03-15', label = 'LiDAR Flight', color = 'red', linestyle = 'dashed')
+# axes[1].axvline('2021-03-15', label = 'LiDAR Flight', color = 'red', linestyle = 'dashed')
 axes[1].set_title('2020-2021', fontweight = 'bold')
 
 for ax in axes:
