@@ -20,6 +20,7 @@ ncs_dir = data_dir.joinpath('ncs')
 fig_dir = Path('/bsuhome/zacharykeskinen/uavsar-validation/figures/model')
 
 ds = xr.open_dataset(ncs_dir.joinpath('final_10_10.nc'))
+# ds = xr.open_dataset(ncs_dir.joinpath('final_insitu.nc'))
 
 insitu = pd.read_parquet('/bsuhome/zacharykeskinen/uavsar-validation/data/insitu/all_difference.parq')
 insitu = insitu[insitu.site_name != 'jackson']
@@ -76,8 +77,10 @@ for i, (ax, [xs, ys]) in enumerate(zip(axes, [[xs, ys], [xs_dry, ys_dry], [xs_be
     # ax.scatter(xs, ys, alpha = 0.1, s = 1)
     ax.set_xlabel('Snow Model SWE Change')
     ax.set_ylabel('UAVSAR SWE Change')
-    # if i == 0:
-    ax.hist2d(xs, ys, bins = 150, norm=mpl.colors.LogNorm(), cmap=mpl.cm.inferno, range = [[-0.1, 0.075],[-0.1, 0.075]])
+    if i ==0 or i ==1:
+        ax.hist2d(xs, ys, bins = 150, norm=mpl.colors.LogNorm(), cmap=mpl.cm.inferno, range = [[-0.1, 0.075],[-0.1, 0.075]])
+    elif i == 2:
+        ax.hist2d(xs, ys, bins = 70, norm=mpl.colors.LogNorm(), cmap=mpl.cm.inferno, range = [[-0.02, 0.075],[-0.02, 0.075]])
     # elif i == 1:
         # ax.hist2d(xs, ys, bins = 100, norm=mpl.colors.LogNorm(), cmap=mpl.cm.inferno, range = [[-0.03, 0.075],[-0.03, 0.075]])
     # else:
@@ -100,4 +103,4 @@ axes[2].set_title('SNOWMODEL vs UAVSAR Retrieved SWE for Dry Snow in Treeless Re
 
 plt.tight_layout()
 
-plt.savefig(fig_dir.joinpath('uavsar_snowmodel_scatter_unw_v4.png'))
+plt.savefig(fig_dir.joinpath('uavsar_snowmodel_scatter_unw_10_10_v1.png'))
