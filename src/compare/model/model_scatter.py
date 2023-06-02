@@ -86,8 +86,8 @@ for i, (ax, [xs, ys]) in enumerate(zip(axes, [[xs, ys], [xs_dry, ys_dry], [xs_be
     # else:
         # ax.hist2d(xs, ys, bins = 30, norm=mpl.colors.LogNorm(), cmap=mpl.cm.inferno, range = [[0.0, 0.04],[0.0, 0.04]])
     
-    ax.set_xlim(-0.1, 0.075)
-    ax.set_ylim(-0.1, 0.075)
+    ax.set_xlim(-0.1, 0.079)
+    ax.set_ylim(-0.1, 0.079)
     
     ax.plot([-0.1,0.2], [-0.1,0.2], color = 'blue', linestyle = 'dashed')
     rmse, r, n, bias = get_stats(xs, ys, bias = True)
