@@ -46,7 +46,7 @@ densities = xr.DataArray(densities,
 phases = xr.DataArray(phases,
     coords = {'time1':ds.time1.data})
 
-sub = sub.where(sub['cor']>0.45)
+# sub = sub.where(sub['cor']>0.45)
 # sub = sub.drop_sel(time1 = '2021-03-16T17:50:00.000000000')
 sub['unw_atm'] = sub['unw'] - sub['delay']
 
