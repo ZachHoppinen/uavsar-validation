@@ -83,7 +83,7 @@ for i, (ax, [xs, ys]) in enumerate(zip(axes, [[xs, ys], [xs_dry, ys_dry], [xs_be
         ax.set_xlim(-0.1, 0.075)
         ax.set_ylim(-0.1, 0.075)
     elif i == 1:
-        ax.hist2d(xs, ys, bins = 100, norm=mpl.colors.LogNorm(), cmap=mpl.cm.inferno, range = [[-0.03, 0.075],[-0.03, 0.075]])
+        ax.hist2d(xs, ys, bins = 100, norm=mpl.colors.LogNorm(), cmap=mpl.cm.inferno, range = [[-0.1, 0.075],[-0.1, 0.075]])
         ax.set_xlim(-0.1, 0.075)
         ax.set_ylim(-0.1, 0.075)
     else:
