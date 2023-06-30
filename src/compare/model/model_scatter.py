@@ -20,7 +20,6 @@ ncs_dir = data_dir.joinpath('ncs')
 fig_dir = Path('/bsuhome/zacharykeskinen/uavsar-validation/figures/model')
 
 ds = xr.open_dataset(ncs_dir.joinpath('final_10_10.nc'))
-# ds = xr.open_dataset(ncs_dir.joinpath('final_insitu.nc'))
 
 insitu = pd.read_parquet('/bsuhome/zacharykeskinen/uavsar-validation/data/insitu/all_difference.parq')
 insitu = insitu[insitu.site_name != 'jackson']
@@ -62,10 +61,11 @@ fig, axes = plt.subplots(3,1, figsize = (8, 12))
 xs, ys = clean_xs_ys(unw_d_swe.data.ravel(), sub['model_d_swe'].data.ravel())
 xs_dry, ys_dry = clean_xs_ys(unw_d_swe.data.ravel(), sub['model_d_swe'].where((sub['cum_melt'] < 0.01)).data.ravel())
 
-best = sub.where((sub['cum_melt'] < 0.01) & (sub['tree_perc'] < 10))
+best = sub.where((sub['cum_melt'] < 0.01) & (sub['tree_perc'] < 20))
 
 model_phases = phase_from_depth(best['model_d_swe']*997/densities, best['inc'], density = densities)
 best['unw_atm'] = best['unw_atm'] - (best['unw_atm'].mean(dim = ['x','y']) - model_phases.mean(dim = ['x','y']))
+# best['unw_atm'] = best['unw_atm'] - (best['unw_atm'].mean(dim = ['x','y']) - phases)
 
 unw_d_swe = depth_from_phase(best['unw_atm'], best['inc'], density = densities) * densities / 997
 unw_d_swe = unw_d_swe.rolling(x = 10, y = 10).mean()
@@ -77,30 +77,31 @@ for i, (ax, [xs, ys]) in enumerate(zip(axes, [[xs, ys], [xs_dry, ys_dry], [xs_be
     # ax.scatter(xs, ys, alpha = 0.1, s = 1)
     ax.set_xlabel('Snow Model SWE Change')
     ax.set_ylabel('UAVSAR SWE Change')
-    if i ==0 or i ==1:
+    if i == 0:
+
         ax.hist2d(xs, ys, bins = 150, norm=mpl.colors.LogNorm(), cmap=mpl.cm.inferno, range = [[-0.1, 0.075],[-0.1, 0.075]])
-    elif i == 2:
-        ax.hist2d(xs, ys, bins = 70, norm=mpl.colors.LogNorm(), cmap=mpl.cm.inferno, range = [[-0.02, 0.075],[-0.02, 0.075]])
-    # elif i == 1:
-        # ax.hist2d(xs, ys, bins = 100, norm=mpl.colors.LogNorm(), cmap=mpl.cm.inferno, range = [[-0.03, 0.075],[-0.03, 0.075]])
-    # else:
-        # ax.hist2d(xs, ys, bins = 30, norm=mpl.colors.LogNorm(), cmap=mpl.cm.inferno, range = [[0.0, 0.04],[0.0, 0.04]])
-    
-    ax.set_xlim(-0.1, 0.079)
-    ax.set_ylim(-0.1, 0.079)
-    
+        ax.set_xlim(-0.1, 0.075)
+        ax.set_ylim(-0.1, 0.075)
+    elif i == 1:
+        ax.hist2d(xs, ys, bins = 100, norm=mpl.colors.LogNorm(), cmap=mpl.cm.inferno, range = [[-0.03, 0.075],[-0.03, 0.075]])
+        ax.set_xlim(-0.025, 0.075)
+        ax.set_ylim(-0.025, 0.075)
+    else:
+        ax.hist2d(xs, ys, bins = 30, norm=mpl.colors.LogNorm(), cmap=mpl.cm.inferno, range = [[-0.03, 0.075],[-0.03, 0.075]])
+        ax.set_xlim(-0.025, 0.075)
+        ax.set_ylim(-0.025, 0.075)
     ax.plot([-0.1,0.2], [-0.1,0.2], color = 'blue', linestyle = 'dashed')
     rmse, r, n, bias = get_stats(xs, ys, bias = True)
-    ax.text(s = f'rmse: {rmse:.3f}, r: {r:.2f}\nn: {n:.2e}', x = 0.01, y= 0.99 , ha = 'left', va = 'top', transform = ax.transAxes)
+    ax.text(s = f'rmsd: {rmse:.3f}, r: {r:.2f}\nn: {n:.2e}', x = 0.01, y= 0.99 , ha = 'left', va = 'top', transform = ax.transAxes)
 
 # axes[0].text(s = 'A', x = 0.99,y= 0.94 , ha = 'right', va = 'top', weight = 'bold', transform = axes[0].transAxes)
 # axes[1].text(s = 'B', x = 0.99,y= 0.94 , ha = 'right', va = 'top',weight = 'bold',transform = axes[1].transAxes)
 
 
 axes[0].set_title('SNOWMODEL vs UAVSAR Retrieved SWE')
-axes[1].set_title('SNOWMODEL vs UAVSAR Retrieved SWE for Dry Snow')
+axes[1].set_title('SNOWMODEL vs UAVSAR Retrieved SWE for Modeled Dry Snow')
 axes[2].set_title('SNOWMODEL vs UAVSAR Retrieved SWE for Dry Snow in Treeless Regions')
 
 plt.tight_layout()
 
-plt.savefig(fig_dir.joinpath('uavsar_snowmodel_scatter_unw_10_10_v1.png'))
+plt.savefig(fig_dir.joinpath('uavsar_snowmodel_scatter_unw_v2.png'))
