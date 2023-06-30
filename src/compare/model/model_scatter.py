@@ -84,12 +84,12 @@ for i, (ax, [xs, ys]) in enumerate(zip(axes, [[xs, ys], [xs_dry, ys_dry], [xs_be
         ax.set_ylim(-0.1, 0.075)
     elif i == 1:
         ax.hist2d(xs, ys, bins = 100, norm=mpl.colors.LogNorm(), cmap=mpl.cm.inferno, range = [[-0.03, 0.075],[-0.03, 0.075]])
-        ax.set_xlim(-0.025, 0.075)
-        ax.set_ylim(-0.025, 0.075)
+        ax.set_xlim(-0.1, 0.075)
+        ax.set_ylim(-0.1, 0.075)
     else:
         ax.hist2d(xs, ys, bins = 30, norm=mpl.colors.LogNorm(), cmap=mpl.cm.inferno, range = [[-0.03, 0.075],[-0.03, 0.075]])
-        ax.set_xlim(-0.025, 0.075)
-        ax.set_ylim(-0.025, 0.075)
+        ax.set_xlim(-0.1, 0.075)
+        ax.set_ylim(-0.1, 0.075)
     ax.plot([-0.1,0.2], [-0.1,0.2], color = 'blue', linestyle = 'dashed')
     rmse, r, n, bias = get_stats(xs, ys, bias = True)
     ax.text(s = f'rmsd: {rmse:.3f}, r: {r:.2f}\nn: {n:.2e}', x = 0.01, y= 0.99 , ha = 'left', va = 'top', transform = ax.transAxes)
