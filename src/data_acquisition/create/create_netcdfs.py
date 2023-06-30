@@ -343,28 +343,28 @@ def insitu_correct(ncs_dir):
 
         t2 = insitu_time.iloc[0]['time2']
         snow_on = (ds['model_swe'].sel(time = t1) > 0.1) & (ds['model_swe'].sel(time = t2) > 0.1)
-        snow_cor = (snow_on & (ds['cor'].sel(time1 = t1) > 0.35))
+        # snow_cor = (snow_on & (ds['cor'].sel(time1 = t1) > 0.35))
 
         for k in ['unw', 'int_phase','unw_atm','int_atm']:
-            cur_phase = ds[k].sel(time1 = t1).where(snow_cor).mean()
+            cur_phase = ds[k].sel(time1 = t1).where(snow_on).mean()
 
             ds[k].loc[{'time1':t1}] = ds[k].sel(time1 = t1) - (cur_phase - expected_phase)
 
         # sd corrected
         # ds.to_netcdf(ncs_dir.joinpath('final_insitu.nc'))
         # swe corrected
-        ds.to_netcdf(ncs_dir.joinpath('final_insitu_swe_all.nc'))
+        ds.to_netcdf(ncs_dir.joinpath('final_insitu_swe_all_no_cor.nc'))
 
 def coarsen(ncs_dir):
-    ds = xr.open_dataset(ncs_dir.joinpath('final_insitu_swe_all.nc'))# .isel(x = slice(0, -1, 100), y = slice(0, -1, 100))
+    ds = xr.open_dataset(ncs_dir.joinpath('final_insitu_swe_all_no_cor.nc'))# .isel(x = slice(0, -1, 100), y = slice(0, -1, 100))
 
     ds = ds.chunk()
 
     ds_10 = ds.coarsen(x = 10, y = 10, boundary = 'trim').mean()
-    ds_10.to_netcdf(ncs_dir.joinpath('final_swe_all_10_10.nc'))
+    ds_10.to_netcdf(ncs_dir.joinpath('final_swe_all_no_cor_10_10.nc'))
 
     ds_50 = ds.coarsen(x = 50, y = 50, boundary = 'trim').mean()
-    ds_50.to_netcdf(ncs_dir.joinpath('final_swe_all_50_50.nc'))
+    ds_50.to_netcdf(ncs_dir.joinpath('final_swe_all_no_cor_50_50.nc'))
 
 if __name__ == '__main__':
     data_dir = Path('/bsuhome/zacharykeskinen/scratch/data/uavsar')
