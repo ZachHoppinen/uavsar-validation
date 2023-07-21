@@ -1,0 +1,15 @@
+axes.titlesize : 24
+axes.labelsize : 20
+lines.linewidth : 3
+lines.markersize : 6
+xtick.labelsize : 16
+ytick.labelsize : 16
+font.size : 16
+
+savefig.dpi : 300
+legend.fontsize : 14
+
+
+
+figure.figsize: 18, 12
+figure.dpi: 100
