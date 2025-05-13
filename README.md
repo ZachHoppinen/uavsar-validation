@@ -2,6 +2,8 @@
 
 This is a research repository comparing UAVSAR L-band InSAR images against snow depth observations over the Sawtooth Mountains of Idaho.
 
+See: https://tc.copernicus.org/articles/18/575/2024/ for full article.
+
 ## Workplan
 
 - [x] Download data
@@ -30,26 +32,26 @@ This is a research repository comparing UAVSAR L-band InSAR images against snow 
     - [x] Compare r2, rmse for binned wetness classes
     - [x] Compare r2, rmse binned by coherence
 
-- [ ] Lidar compare
+- [x] Lidar compare
     - [x] Compare r2, rmse of summed SWE vs lidar for each location - failed due to lack of summed SWEs (see prepare UAVSAR section pt 2.) 
     - [x] Compare r2 of UAVSAR sd delta vs snotel SD
     - [x] plot of r2 vs binned slope, aspect, tree %
-    - [ ] check covariance of independent datasets
+    - [x] check covariance of independent datasets
 
 - [x] Ancillary figures
     - [x] Figure showing UAVSAR flight box, insitu sites, lidar flight boxes
     - [x] Met summary figure for each study/lidar site's met data
 
-- [ ] Writing - rough draft
+- [x] Writing - rough draft
     - [x] introduction
     - [x] methods
-    - [ ] results
-    - [ ] discussion
-    - [ ] conclusion
+    - [x] results
+    - [x] discussion
+    - [x] conclusion
 
-- [ ] Writing - polished draft
-    - [ ] introduction
-    - [ ] methods
-    - [ ] results
-    - [ ] discussion
-    - [ ] conclusion
+- [x] Writing - polished draft
+    - [x] introduction
+    - [x] methods
+    - [x] results
+    - [x] discussion
+    - [x] conclusion
